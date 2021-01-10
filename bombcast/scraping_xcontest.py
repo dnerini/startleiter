@@ -1,19 +1,18 @@
 import getpass
 import logging
-import os
-import requests
 import time
 from pprint import pprint
 
 import pandas as pd
 import psutil
+import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 logging.basicConfig(
     # format="%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s",
@@ -46,7 +45,7 @@ DEFAULT_QUERY = {
 def launch_browser():
     options = Options()
     options.headless = True
-    options.log.level = "trace" # log output is stored in geckodriver.log (current dir)
+    options.log.level = "trace"  # log output is stored in geckodriver.log (current dir)
     browser = webdriver.Firefox(
         options=options,
         executable_path="/users/ned/.local/bin/geckodriver"
