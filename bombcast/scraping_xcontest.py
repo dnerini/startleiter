@@ -48,7 +48,7 @@ def launch_browser():
     options.log.level = "trace"  # log output is stored in geckodriver.log (current dir)
     browser = webdriver.Firefox(
         options=options,
-        executable_path="/users/ned/.local/bin/geckodriver"
+        executable_path="/home/ned/.local/bin/geckodriver"
     )
     browser.set_page_load_timeout(5)
     browser.set_script_timeout(5)
