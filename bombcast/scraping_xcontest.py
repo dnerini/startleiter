@@ -138,6 +138,7 @@ def as_dataframe(data):
     return df
 
 def parse_flights(query_url, pace):
+    global counter
     page = requests.get(query_url)
     soup = BeautifulSoup(page.content, "html.parser")
     table = soup.find("table", attrs={"class": "flights"})
@@ -145,7 +146,7 @@ def parse_flights(query_url, pace):
     rows = table_body.find_all("tr")
     flights = []
     t0 = time.monotonic()
-    spacing = 0
+    total_sleep = 0
     for n, row in enumerate(rows):
         cols = row.find_all("td")
         cols = [ele.text.strip() for ele in cols]
@@ -158,7 +159,7 @@ def parse_flights(query_url, pace):
         if details:
             flight += details
         else:
-            flight += [None,] * 7
+            flight += [None, ] * 7
         flights.append(flight)
         # pacing and spacing
         time_lapsed = time.monotonic() - t0
@@ -167,10 +168,15 @@ def parse_flights(query_url, pace):
         logger.info(f"Averaging {requests_done / time_lapsed * 3600:.0f} requests per hour")
         if requests_togo > 0:
             time_togo = (requests_done + requests_togo) / pace * 3600 - time_lapsed
-            spacing = max(0, time_togo / requests_togo - time_lapsed / requests_done)
+            spacing = max(0, time_togo / requests_togo - (time_lapsed - total_sleep) / requests_done)
             if spacing > 0:
                 logger.info(f"Slowing down... wait {spacing:.1f} seconds...")
                 time.sleep(spacing)
+                total_sleep += spacing
+
+        counter += 1
+        if counter == stop_after:
+            break
     return flights
 
 def cleanup():
@@ -185,15 +191,16 @@ def cleanup():
 if __name__ == "__main__":
 
     # set pacing in number of requests per hour
-    pace = 1e9 # 224 requests before blocked (no pacing)
-    pace = 500
+    pace = 1e4
+    stop_after = 5
 
     browser = launch_browser()
+    counter = 0
     try:
         flights = []
         id_start = 0
-        while id_start < 5000:
-            logger.info(f"XContest Flight Chunk {id_start} to {id_start + 50}")
+        while id_start < stop_after:
+            logger.info(f"XContest Flight Chunk {id_start} to {id_start + min(stop_after - 1, 50)}")
             flight_chunk = parse_flights(query_flights({"list[start]": id_start}), pace)
             if flight_chunk:
                 flights += flight_chunk
@@ -204,6 +211,7 @@ if __name__ == "__main__":
         browser.quit()
         cleanup()
 
-    flights = as_dataframe(flights)
-    pprint(flights)
-    flights.to_csv("xcontest_cimetta.csv")
+        flights = as_dataframe(flights)
+        pprint(flights)
+        flights.to_csv("xcontest_cimetta.csv")
+        logger.info("saved: xcontest_cimetta.csv")
