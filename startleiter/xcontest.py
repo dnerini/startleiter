@@ -14,7 +14,7 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from bombcast.database import Database
+from startleiter.database import Database
 
 logger = logging.getLogger(__name__)
 
