@@ -8,7 +8,7 @@ import psutil
 import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
@@ -114,7 +114,7 @@ def flight_details(flight):
         logger.error("Failed to load Flight Details")
         return None
     try:
-        element = WebDriverWait(browser, 20).until(
+        element = WebDriverWait(browser, 20, ignored_exceptions=StaleElementReferenceException).until(
             EC.element_to_be_clickable((By.LINK_TEXT, "Flight"))
         )
     except TimeoutException:
@@ -230,8 +230,8 @@ if __name__ == "__main__":
     db = Database(source, site)
 
     # set pacing in number of requests per hour
-    pace = 500
-    stop_after = 200
+    pace = 1000
+    stop_after = 1e5
 
     browser = launch_browser()
     try:
