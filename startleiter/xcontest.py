@@ -160,6 +160,7 @@ def parse_flights(query_url, pace):
     flights = []
     t0 = time.monotonic()
     total_sleep = 0
+    consecutive_timeouts = 0
     for n, row in enumerate(rows):
         try:
             flight = parse_flight(row)
@@ -167,7 +168,15 @@ def parse_flights(query_url, pace):
             logger.error(f"Failed to parse flight {n}")
             continue
         logger.info(flight)
-        details = flight_details(row)
+        try:
+            details = flight_details(row)
+        except TimeoutException:
+            consecutive_timeouts += 1
+            details = None
+        else:
+            consecutive_timeouts = 0
+        if consecutive_timeouts > 3:
+            raise TimeoutException
         if details:
             flight += details
         else:
@@ -230,7 +239,7 @@ if __name__ == "__main__":
     db = Database(source, site)
 
     # set pacing in number of requests per hour
-    pace = 1000
+    pace = 120
     stop_after = 1e5
 
     browser = launch_browser()
@@ -254,5 +263,5 @@ if __name__ == "__main__":
         # cleanup()
 
         df = db.to_pandas()
-        print(df.head())
+        print(df)
         print(df.describe())
