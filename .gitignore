@@ -134,3 +134,5 @@ dmypy.json
 
 # Secrets
 startleiter/config/credentials.toml
+data/
+notebooks/
