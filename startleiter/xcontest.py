@@ -9,8 +9,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+import startleiter.scraping as scr
 from startleiter.database import Database
-from startleiter.scraping import launch_browser, pacing, wait_till_loaded
 
 logger = logging.getLogger(__name__)
 
@@ -34,26 +34,6 @@ DEFAULT_QUERY = {
     "filter[avg]": "",
     "filter[pilot]": "",
 }
-
-
-def build_query(parameters=None):
-    """Build search url for xcontest.org.
-    
-    Parameters
-    ----------
-    parameters: dict
-        Optional parameters to change wrt the default query.
-
-    Returns
-    -------
-    query_url: str
-    """
-    if parameters is None:
-        parameters = {}
-    query = DEFAULT_QUERY.copy()
-    query.update(parameters)
-    query_str = "&".join([f"{key}={value}" for key, value in query.items()])
-    return SEARCH_URL + "/?" + query_str
 
 
 def flight_summary(table_row):
@@ -123,7 +103,7 @@ def flight_details(flight, browser):
     except Exception as e:
         logger.error(e)
         return None
-    loaded = wait_till_loaded(browser, url)
+    loaded = scr.wait_till_loaded(browser, url)
     if not loaded:
         logger.error("Failed to load Flight Details")
         return None
@@ -205,7 +185,7 @@ def parse_flights(query_url, browser, pace=120):
 
         flights_data.append(flight_data)
 
-        total_sleep = pacing(n, len(flights), t0, pace, total_sleep)
+        total_sleep = scr.pacing(n, len(flights), t0, pace, total_sleep)
 
         COUNTER += 1
         if COUNTER == STOP_AFTER:
@@ -220,14 +200,14 @@ def scrape(source, site, pace):
     # Connect to database
     db = Database(source, site)
 
-    browser = launch_browser()
+    browser = scr.launch_browser()
     time_start = time.monotonic()
 
     try:
         id_start = db.query_last_flight()
         while id_start < STOP_AFTER:
             logger.info(f"XContest Flight Chunk {id_start} to {id_start + min(STOP_AFTER - 1, 50)}")
-            query_url = build_query({"list[start]": id_start})
+            query_url = scr.build_query(SEARCH_URL, DEFAULT_QUERY, {"list[start]": id_start})
             flight_chunk = parse_flights(query_url, browser, pace)
             if flight_chunk:
                 db.insert_flights(flight_chunk)

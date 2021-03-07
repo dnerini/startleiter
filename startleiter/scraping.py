@@ -21,6 +21,28 @@ def launch_browser():
     return browser
 
 
+def build_query(search_url, default_query, parameters=None):
+    """Build search url.
+
+    Parameters
+    ----------
+    search_url: str
+    default_query: dict
+    parameters: dict, optional
+        Optional parameters to change wrt the default query.
+
+    Returns
+    -------
+    query_url: str
+    """
+    if parameters is None:
+        parameters = {}
+    query = default_query.copy()
+    query.update(parameters)
+    query_str = "&".join([f"{key}={value}" for key, value in query.items()])
+    return search_url + "/?" + query_str
+
+
 def wait_till_loaded(browser, url, maxattempts=3):
     try:
         pageid = url.split("/detail:")[1]
