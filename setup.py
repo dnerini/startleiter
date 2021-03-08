@@ -8,5 +8,8 @@ setup(
     author_email="daniele.nerini@gmail.com",
     description="",
     packages=find_packages(),
-    install_requires=["beautifulsoup4", "metpy", "pandas", "psutil", "psycopg2-binary", "requests", "selenium", "sqlalchemy", "toml"],
+    install_requires=[
+        "beautifulsoup4", "metpy", "numpy", "pandas", "psutil", "psycopg2-binary", "requests", "selenium", "sqlalchemy",
+        "toml"
+    ],
 )

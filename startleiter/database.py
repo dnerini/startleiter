@@ -1,8 +1,8 @@
 import logging
 from datetime import datetime, timedelta
 
+import numpy as np
 import pandas as pd
-
 from sqlalchemy import create_engine
 from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, Interval, String
 from sqlalchemy.ext.declarative import declarative_base
@@ -36,6 +36,20 @@ class Site(Base):
     flights = relationship("Flight", backref="site", lazy=True)
 
 
+class Station(Base):
+    __tablename__ = "station"
+    id = Column(Integer, primary_key=True)
+    source_id = Column(Integer, ForeignKey("source.id"), nullable=False)
+    name = Column(String(30))
+    long_name = Column(String(30))
+    stid = Column(Integer)
+    country = Column(String(30))
+    longitude = Column(Float)
+    latitude = Column(Float)
+    elevation = Column(Float)
+    soundings = relationship("Sounding", backref="site", lazy=True)
+
+
 class Flight(Base):
     __tablename__ = "flight"
     id = Column(Integer, primary_key=True)
@@ -59,9 +73,44 @@ class Flight(Base):
     free_distance_1_km = Column(Float)
     free_distance_2_km = Column(Float)
 
+
+class Sounding(Base):
+    __tablename__ = "sounding"
+    id = Column(Integer, primary_key=True)
+    source_id = Column(Integer, ForeignKey("source.id"), nullable=False)
+    station_id = Column(Integer, ForeignKey("station.id"), nullable=False)
+    datetime = Column(DateTime(timezone=False))
+    show = Column(Float)
+    lift = Column(Float)
+    lftv = Column(Float)
+    swet = Column(Float)
+    kinx = Column(Float)
+    ctot = Column(Float)
+    vtot = Column(Float)
+    ttot = Column(Float)
+    cape = Column(Float)
+    capv = Column(Float)
+    cins = Column(Float)
+    cinv = Column(Float)
+    eqlv = Column(Float)
+    eqtv = Column(Float)
+    lfct = Column(Float)
+    lfcv = Column(Float)
+    brch = Column(Float)
+    brcv = Column(Float)
+    lclt = Column(Float)
+    lclp = Column(Float)
+    mlth = Column(Float)
+    mlmr = Column(Float)
+    thtk = Column(Float)
+    pwat = Column(Float)
+
+
+
+
 class Database:
 
-    def __init__(self, source, site):
+    def __init__(self, source, site=None, station=None):
         db_uri = config["postgresql"]["uri"]
         self.engine = create_engine(db_uri, echo=False)
 
@@ -71,7 +120,10 @@ class Database:
         Base.metadata.create_all(self.engine)
 
         self.source_id = self.insert_source(source)
-        self.site_id = self.insert_site(site)
+        if site is not None:
+            self.site_id = self.insert_site(site)
+        if station is not None:
+            self.station_id = self.insert_station(station)
 
     def insert_source(self, source):
         obj = self.session.query(Source).filter_by(name=source["name"]).first()
@@ -80,7 +132,7 @@ class Database:
             self.session.add(obj)
             self.session.commit()
         else:
-            logger.info(f"Source {source['name']} already exists.")
+            logger.debug(f"Source {source['name']} already exists.")
         return obj.id
 
     def insert_site(self, site):
@@ -91,14 +143,35 @@ class Database:
             self.session.add(obj)
             self.session.commit()
         else:
-            logger.info(f"Site {site['name']} already exists.")
+            logger.debug(f"Site {site['name']} already exists.")
         return obj.id
 
-    def print_sites(self):
-        print(self.session.query(Site.__table__).all())
+    def insert_station(self, station):
+        obj = self.session.query(Station).filter_by(name=station["name"]).first()
+        if obj is None:
+            station.update({"source_id": self.source_id})
+            obj = Station(**station)
+            self.session.add(obj)
+            self.session.commit()
+        else:
+            logger.debug(f"Station {station['name']} already exists.")
+        return obj.id
+
+    def insert_sounding(self, validtime, sounding):
+        sounding = reformat_uwyo(validtime, sounding, self.source_id, self.station_id)
+        obj = self.session.query(Sounding).filter_by(station_id=self.station_id)
+        obj = obj.filter_by(datetime=sounding["datetime"]).first()
+        if obj is None:
+            sounding.update({"station_id": self.station_id})
+            obj = Sounding(**sounding)
+            self.session.add(obj)
+            self.session.commit()
+        else:
+            logger.debug(f"Sounding {sounding['datetime']} already exists.")
+        return obj.id
 
     def insert_flights(self, flights):
-        flights = parse_flights(flights, self.source_id, self.site_id)
+        flights = reformat_xcontest(flights, self.source_id, self.site_id)
         self.session.add_all([Flight(**flight) for flight in flights])
         self.session.commit()
 
@@ -113,7 +186,40 @@ class Database:
         return pd.read_sql("flight", self.engine)
 
 
-def parse_flights(flights, source_id, site_id):
+def reformat_uwyo(validtime, sounding, source_id, station_id):
+    return {
+        "source_id": source_id,
+        "station_id": station_id,
+        "datetime": validtime,
+        "show": sounding.get("Showalter index", np.nan),
+        "lift": sounding.get("Lifted index", np.nan),
+        "lftv": sounding.get("LIFT computed using virtual temperature", np.nan),
+        "swet": sounding.get("SWEAT index", np.nan),
+        "kinx": sounding.get("K index", np.nan),
+        "ctot": sounding.get("Cross totals index", np.nan),
+        "vtot": sounding.get("Vertical totals index", np.nan),
+        "ttot": sounding.get("Totals totals index", np.nan),
+        "cape": sounding.get("Convective Available Potential Energy", np.nan),
+        "capv": sounding.get("CAPE using virtual temperature", np.nan),
+        "cins": sounding.get("Convective Inhibition", np.nan),
+        "cinv": sounding.get("CINS using virtual temperature", np.nan),
+        "eqlv": sounding.get("Equilibrum Level", np.nan),
+        "eqtv": sounding.get("Equilibrum Level using virtual temperature", np.nan),
+        "lfct": sounding.get("Level of Free Convection", np.nan),
+        "lfcv": sounding.get("LFCT using virtual temperature", np.nan),
+        "brch": sounding.get("Bulk Richardson Number", np.nan),
+        "brcv": sounding.get("Bulk Richardson Number using CAPV", np.nan),
+        "lclt": sounding.get("Temp [K] of the Lifted Condensation Level", np.nan),
+        "lclp": sounding.get("Pres [hPa] of the Lifted Condensation Level", np.nan),
+        "mlth": sounding.get("Mean mixed layer potential temperature", np.nan),
+        "mlmr": sounding.get("Mean mixed layer mixing ratio", np.nan),
+        "thtk": sounding.get("1000 hPa to 500 hPa thickness", np.nan),
+        "pwat": sounding.get("Precipitable water [mm] for entire sounding", np.nan),
+    }
+
+
+def reformat_xcontest(flights, source_id, site_id):
+    """Reformat raw xcontest data before appending to the database"""
     out = []
     for flight in flights:
         try:
