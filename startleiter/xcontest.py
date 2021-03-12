@@ -101,8 +101,8 @@ def flight_details(flight, browser):
     try:
         browser.get(url + "#fd=flight")
     except Exception as e:
-        logger.error(e)
-        return None
+        logger.exception(e)
+        raise
     loaded = scr.wait_till_loaded(browser, url)
     if not loaded:
         logger.error("Failed to load Flight Details")
@@ -120,8 +120,8 @@ def flight_details(flight, browser):
     try:
         details = _parse_table(subsoup, "XCinfo")
     except Exception as ex:
-        logger.error(ex)
-        return None
+        logger.exception(ex)
+        raise
     details = [detail[0] if isinstance(detail, list) else None for detail in details]
     logger.info(details)
     return details
@@ -147,6 +147,7 @@ def parse_flights(query_url, browser, pace=120):
     global COUNTER
 
     page = requests.get(query_url)
+    page.raise_for_status()
     soup = BeautifulSoup(page.content, "html.parser")
     table = soup.find("table", attrs={"class": "flights"})
     table_body = table.find("tbody")
@@ -163,6 +164,9 @@ def parse_flights(query_url, browser, pace=120):
         # Parse flight summary
         try:
             summary = flight_summary(flight)
+        except AttributeError:
+            logger.error(f"Failed to parse flight {n}")
+            continue
         except IndexError:
             logger.error(f"Failed to parse flight {n}")
             continue
@@ -171,6 +175,9 @@ def parse_flights(query_url, browser, pace=120):
         # Parse flight details
         try:
             details = flight_details(flight, browser)
+        except AttributeError:
+            logger.error(f"Failed to parse flight {n} details")
+            details = [None, ] * 7
         except TimeoutException:
             consecutive_timeouts += 1
             details = [None, ] * 7
