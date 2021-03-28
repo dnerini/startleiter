@@ -1,14 +1,16 @@
 import logging
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 from sqlalchemy import create_engine
 from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, Interval, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 
-from startleiter import config
+from startleiter import config as CFG
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +82,7 @@ class Sounding(Base):
     source_id = Column(Integer, ForeignKey("source.id"), nullable=False)
     station_id = Column(Integer, ForeignKey("station.id"), nullable=False)
     datetime = Column(DateTime(timezone=False))
+    data = Column(String(30))
     show = Column(Float)
     lift = Column(Float)
     lftv = Column(Float)
@@ -106,12 +109,10 @@ class Sounding(Base):
     pwat = Column(Float)
 
 
-
-
 class Database:
 
     def __init__(self, source, site=None, station=None):
-        db_uri = config["postgresql"]["uri"]
+        db_uri = CFG["postgresql"]["uri"]
         self.engine = create_engine(db_uri, echo=False)
 
         Session = sessionmaker(self.engine)
@@ -157,18 +158,38 @@ class Database:
             logger.debug(f"Station {station['name']} already exists.")
         return obj.id
 
-    def insert_sounding(self, validtime, sounding):
-        sounding = reformat_uwyo(validtime, sounding, self.source_id, self.station_id)
+    def insert_sounding(self, validtime, sounding, data_fn=None, overwrite=False):
+        indices = reformat_uwyo(validtime, sounding, self.source_id, self.station_id)
+        if data_fn:
+            indices["data"] = data_fn.name
         obj = self.session.query(Sounding).filter_by(station_id=self.station_id)
-        obj = obj.filter_by(datetime=sounding["datetime"]).first()
-        if obj is None:
+        obj = obj.filter_by(datetime=indices["datetime"]).first()
+        if obj is None or overwrite:
             sounding.update({"station_id": self.station_id})
-            obj = Sounding(**sounding)
+            obj = Sounding(**indices)
             self.session.add(obj)
             self.session.commit()
         else:
-            logger.debug(f"Sounding {sounding['datetime']} already exists.")
+            logger.debug(f"Sounding {indices['datetime']} already exists.")
         return obj.id
+
+    def insert_soundings(self, soundings):
+        data_fn = self.save_sounding_data(soundings)
+        for validtime, sounding in soundings.items():
+            self.insert_sounding(validtime, sounding["indices"], data_fn)
+
+    def save_sounding_data(self, soundings):
+        data = [sound["data"] for sound in soundings.values()]
+        validtimes = list(soundings.keys())
+        data = xr.concat(data, "validtime")
+        data = data.assign_coords(validtime=validtimes)
+        outdir = Path(CFG["netcdf"]["repo"])
+        outdir.mkdir(exist_ok=True)
+        fn = f"sounding-{self.source_id}-{self.station_id}-{validtimes[0]:%Y%m}.nc"
+        fn = outdir / fn
+        data.to_netcdf(fn)
+        logger.info(f"Saved: {fn}")
+        return fn
 
     def insert_flights(self, flights):
         flights = reformat_xcontest(flights, self.source_id, self.site_id)
@@ -181,6 +202,13 @@ class Database:
         if flight_no > 0:
             logger.info(f"Starting querying from flight no. {flight_no}.")
         return flight_no
+
+    def query_last_sounding(self, default_start=datetime(2005, 12, 31, 0)):
+        obj = self.session.query(Sounding).filter_by(station_id=self.station_id).order_by(Sounding.datetime.desc()).first()
+        start_date = default_start if obj is None else obj.datetime
+        if start_date > default_start:
+            logger.info(f"Starting querying from {start_date}.")
+        return start_date
 
     def to_pandas(self):
         return pd.read_sql("flight", self.engine)
