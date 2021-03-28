@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 import startleiter.scraping as scr
 from startleiter.database import Database
 from startleiter.utils import to_wind_components
+from startleiter import config as CFG
 
 
 logger = logging.getLogger(__name__)
@@ -159,29 +160,8 @@ if __name__ == "__main__":
     )
 
     # Define source
-    source = {
-        "name": "uwyo",
-        "base_url": BASE_URL,
-    }
-
-    #station = {
-    #    "name": "LSMP",
-    #    "long_name": "Payerne",
-    #    "stid": 6610,
-    #    "country": "Switzerland",
-    #    "latitude": 46.81,
-    #    "longitude": 6.95,
-    #    "elevation": 491.0
-    #}
-    station = {
-        "name": "LIML",
-        "long_name": "Milano",
-        "stid": 16080,
-        "country": "Italy",
-        "latitude": 45.43,
-        "longitude": 9.28,
-        "elevation": 103.0
-    }
+    source = CFG["sources"]["uwyo"]
+    station = CFG["stations"]["Milano"]
 
     # Connect to database
     db = Database(source, station=station)

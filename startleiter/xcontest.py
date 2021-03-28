@@ -11,6 +11,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 import startleiter.scraping as scr
 from startleiter.database import Database
+from startleiter import config as CFG
 
 logger = logging.getLogger(__name__)
 
@@ -214,7 +215,13 @@ def scrape(source, site, pace):
         id_start = db.query_last_flight()
         while id_start < STOP_AFTER:
             logger.info(f"XContest Flight Chunk {id_start} to {id_start + min(STOP_AFTER - 1, 50)}")
-            query_url = scr.build_query(SEARCH_URL, DEFAULT_QUERY, {"list[start]": id_start})
+            this_query = {
+                "list[start]": id_start,
+                "filter[point]": f"{site['longitude']}%20{site['latitude']}",
+                "filter[radius]": site["radius"],
+            }
+            query_url = scr.build_query(SEARCH_URL, DEFAULT_QUERY, this_query)
+            logger.debug(query_url)
             flight_chunk = parse_flights(query_url, browser, pace)
             if flight_chunk:
                 db.insert_flights(flight_chunk)
@@ -244,20 +251,8 @@ if __name__ == "__main__":
         level=logging.INFO
     )
 
-    # Define source
-    source = {
-        "name": "xcontest",
-        "base_url": BASE_URL,
-    }
-
-    # Define launching site
-    site = {
-        "name": "Cimetta",
-        "country": "CH",
-        "longitude": 8.78796,
-        "latitude": 46.1996,
-        "radius": 1000,
-    }
+    source = CFG["sources"]["xcontest"]
+    site = CFG["sites"]["Carì"]
 
     # Set pace and start main routine
     pace = 120  # requests / hour

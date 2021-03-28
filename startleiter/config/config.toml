@@ -1,3 +1,42 @@
 [netcdf]
-
 repo = "/home/ned/PycharmProjects/startleiter/data/soundings"
+
+[sources."xcontest"]
+name = "xcontest"
+base_url = "https://www.xcontest.org"
+
+[sources."uwyo"]
+name = "uwyo"
+base_url = "http://weather.uwyo.edu"
+
+[sites."Cimetta"]
+name = "Cimetta"
+country = "CH"
+longitude = 8.78796
+latitude = 46.1996
+radius = 1000
+
+[sites."Carì"]
+name = "Carì"
+country = "CH"
+longitude = 8.821012
+latitude = 46.502102
+radius = 5000
+
+[stations."Milano"]
+name = "LIML"
+long_name = "Milano"
+stid = 16080
+country = "Italy"
+latitude = 45.43
+longitude = 9.28
+elevation = 103.0
+
+[stations."Payerne"]
+name = "LSMP"
+long_name = "Payerne"
+stid = 6610
+country = "Switzerland"
+latitude = 46.81
+longitude = 6.95
+elevation = 491.0
