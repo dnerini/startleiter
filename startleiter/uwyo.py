@@ -64,7 +64,7 @@ def year_month_from_to(from_dtime, to_dtime=None):
 
 def interp_sounding(dataset, ref_pres):
     dataset = to_wind_components(dataset)
-    dataset = dataset.interp(PRES_hPa=ref_pres)
+    dataset = dataset.interp(PRES=ref_pres)
     dataset = to_wind_components(dataset, inverse=True)
     return dataset
 
