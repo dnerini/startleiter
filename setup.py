@@ -10,6 +10,6 @@ setup(
     packages=find_packages(),
     install_requires=[
         "beautifulsoup4", "metpy", "numpy", "pandas", "psutil", "psycopg2-binary", "requests", "selenium", "sqlalchemy",
-        "toml"
+        "toml", "fastapi", "uvicorn", "bottleneck", "tensorflow"
     ],
 )
