@@ -43,12 +43,16 @@ def pipeline(station):
 
 @app.get('/cimetta')
 def predict():
-    validtime, input = pipeline(16080)
+    validtime, inputs = pipeline(16080)
     model_fly_prob = tf.keras.models.load_model("models/fly_prob_1.h5")
     model_max_alt = tf.keras.models.load_model("models/fly_max_alt_1.h5")
     return {
         "site": "Cimetta",
         "validtime": f"{validtime:%Y-%m-%d}",
-        "flying_probability": model_fly_prob.predict(input)[0][0],
-        "max_altitude": model_max_alt.predict(input)[0].argmax() * 300,
+        "flying_probability": float(model_fly_prob.predict(inputs)[0][0]),
+        "max_altitude": float(model_max_alt.predict(inputs)[0].argmax() * 300 + 1600),
     }
+
+
+if __name__ == "__main__":
+    print(predict())
