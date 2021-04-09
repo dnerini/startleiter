@@ -28,7 +28,7 @@ def preprocess(ds):
 
 def standardize(da):
     """Standardize the input data with training mean and standard deviation."""
-    moments = xr.load_dataset("models/moments.nc")
+    moments = xr.load_dataset("models/fly_prob_moments.nc")
     return (da - moments.mu) / moments.sigma
 
 
@@ -43,9 +43,9 @@ def pipeline(station):
 @app.get('/cimetta')
 def predict():
     date, data = pipeline(16080)
-    model = tf.keras.models.load_model("models/conv1d.h5")
-    prediction = model.predict(data.values[None, ...])[0]
-    flying_prob = float(prediction[1])
+    model = tf.keras.models.load_model("models/fly_prob_1.h5")
+    prediction = model.predict(data.values[None, ...])
+    flying_prob = float(prediction[0][0])
     return {
         "site": "Cimetta",
         "validtime": f"{date:%Y-%m-%d}",
