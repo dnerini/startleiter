@@ -18,6 +18,7 @@ def get_last_radiosounding(station):
 
 def preprocess(ds):
     ds = to_wind_components(ds)
+    ds["DWPT"] = ds["TEMP"] - ds["DWPT"]
     return (ds[["TEMP", "DWPT", "U", "V"]]
             .rename({"PRES": "level"})
             .bfill(dim="level", limit=3)
@@ -37,17 +38,17 @@ def pipeline(station):
     date, data = get_last_radiosounding(station)
     data = preprocess(data)
     data = standardize(data)
-    return date, data
+    return date, data.values[None, ...]
 
 
 @app.get('/cimetta')
 def predict():
-    date, data = pipeline(16080)
-    model = tf.keras.models.load_model("models/fly_prob_1.h5")
-    prediction = model.predict(data.values[None, ...])
-    flying_prob = float(prediction[0][0])
+    validtime, input = pipeline(16080)
+    model_fly_prob = tf.keras.models.load_model("models/fly_prob_1.h5")
+    model_max_alt = tf.keras.models.load_model("models/fly_max_alt_1.h5")
     return {
         "site": "Cimetta",
-        "validtime": f"{date:%Y-%m-%d}",
-        "flying_probability": flying_prob,
+        "validtime": f"{validtime:%Y-%m-%d}",
+        "flying_probability": model_fly_prob.predict(input)[0][0],
+        "max_altitude": model_max_alt.predict(input)[0].argmax() * 300,
     }
