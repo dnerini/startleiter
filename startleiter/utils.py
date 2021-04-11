@@ -16,6 +16,7 @@ def to_wind_components(dataset, inverse=False):
     xarray.Dataset
 
     """
+    dataset = dataset.copy()
     if not inverse:
         wind_components = mpcalc.wind_components(
             dataset["SKNT"].values * units.knots,
@@ -41,7 +42,7 @@ def to_wind_components(dataset, inverse=False):
         dataset["SKNT"].attrs["units"] = "knot"
         dataset["SKNT"] = dataset["SKNT"].astype("float32")
         dataset["DRCT"].attrs["units"] = "deg"
-        dataset["DRCT"] = dataset["U"].astype("float32")
+        dataset["DRCT"] = dataset["DRCT"].astype("float32")
         dataset = dataset.drop_vars(("U", "V"))
 
     return dataset
