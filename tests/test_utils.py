@@ -3,10 +3,9 @@ import xarray as xr
 from startleiter import utils
 
 def test_to_wind_components():
-    n = 100
-    speed = np.random.randint(0, 100, n)
-    direction = np.random.randint(0, 360, n)
-    level = np.arange(n)
+    direction = np.array([90, 180, 270, 360])
+    speed = np.ones(direction.shape) * 10
+    level = np.arange(direction.size)
     ds1 = xr.Dataset(
         {
             "SKNT": ("level", speed),
