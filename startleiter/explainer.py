@@ -22,8 +22,11 @@ def explainable_plot(sounding, shap_values, prediction):
     fig = plt.figure(figsize=(6, 6.5), dpi=300)
     skew = SkewT(fig, rotation=45)
 
-    # Add SHAP values
+    # SHAP values
     shval = shap_values[0, :, :]
+    # split DWPD between TEMP and DWPT
+    shval[:, 0] += shval[:, 1] / 2
+    shval[:, 1] /= 2
     shmax = np.quantile(np.abs(shval), 0.98)
     shval /= shmax
     shval = np.clip(shval, -1, 1)
@@ -45,32 +48,51 @@ def explainable_plot(sounding, shap_values, prediction):
     norm = mpl.colors.Normalize(vmin=-1, vmax=1)
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
-    cbar = plt.colorbar(
-        sm,
-        label="Impact on flying conditions",
-        ticks=np.linspace(-1, 1, 21),
-        boundaries=np.arange(-1.05, 1.1, .1),
-        orientation="horizontal",
-        shrink=0.5,
-        pad=0.1
-    )
-    cbar.set_ticks([-1, 1])
-    cbar.ax.set_xticklabels(['Negative', 'Positive'], fontsize="small")
+    cbaxes = fig.add_axes([0.93, 0.62, 0.02, 0.25])
+    cbar = plt.colorbar(sm, cax=cbaxes)
+    cbar.ax.set_title('Positive', fontsize="x-small")
+    cbar.ax.set_xlabel('Negative', fontsize="x-small")
+    cbar.set_ticks([])
+    #cbar.ax.set_yticklabels(['Negative', 'Positive'], fontsize="x-small")
 
     validtime = f"{sounding.attrs['validtime']:%Y-%m-%d}"
 
-    text = f"""
-    Site: Cimetta, Switzerland (1600 masl)
-    Validtime: {validtime}
-    Flying probability: {prediction * 100:.0f}%
-    Source: https://github.com/dnerini/startleiter 
-    Sounding data: 16080 Milano-Linate (weather.uwyo.edu)"""
-    plt.text(-0.03, 1.01, text,
+    text_sx_top = f"""
+Cimetta, Switzerland (1600 masl)
+{validtime}
+Radiosounding 00Z 16080 Milano-Linate"""
+    skew.ax.text(0, 1.01, text_sx_top,
              fontsize="small",
              stretch="condensed",
              linespacing=1.1,
              va="bottom",
-             transform=plt.gca().transAxes
+             transform=skew.ax.transAxes
+             )
+
+    text_dx_top = f"""
+Flying probability: {prediction * 100:.0f}%"""
+    skew.ax.text(1.0, 1.01, text_dx_top,
+             fontsize="small",
+             stretch="condensed",
+             linespacing=1.1,
+             ha="right",
+             va="bottom",
+             transform=skew.ax.transAxes
+             )
+
+    text_sx_bottom = f"""
+Credits:
+    - Flight data: xcontest.org
+    - Radiosounding data: weather.uwyo.edu
+    - Impact score: github.com/slundberg/shap
+    - SkewT plot: unidata.github.io/MetPy"""
+    skew.ax.text(0.01, 0.01, text_sx_bottom,
+             fontsize="x-small",
+             stretch="condensed",
+             linespacing=1.1,
+             ha="left",
+             va="bottom",
+             transform=skew.ax.transAxes
              )
 
     return fig
