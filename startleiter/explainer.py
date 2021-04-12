@@ -15,8 +15,7 @@ def explainable_plot(sounding, shap_values, prediction):
     # Assign units
     p = sounding.level.values * units.hPa
     T = sounding.sel(variable="TEMP").values * units.degC
-    # Td = sounding.sel(variable="DWPT").values * units.degC
-    Td = (T.magnitude - sounding.sel(variable="DWPT").values) * units.degC
+    Td = (T.magnitude - sounding.sel(variable="DWPD").values) * units.degC
     U = sounding.sel(variable="U").values * units.knots
     V = sounding.sel(variable="V").values * units.knots
 

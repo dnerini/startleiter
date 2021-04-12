@@ -31,8 +31,9 @@ def get_last_sounding(station):
 
 def preprocess(ds):
     ds = to_wind_components(ds)
-    ds["DWPT"] = ds["TEMP"] - ds["DWPT"]
-    return (ds[["TEMP", "DWPT", "U", "V"]]
+    # dew point temperature depression
+    ds["DWPD"] = ds["TEMP"] - ds["DWPT"]
+    return (ds[["TEMP", "DWPD", "U", "V"]]
             .rename({"PRES": "level"})
             .bfill(dim="level", limit=3)
             .to_array().transpose("level", "variable")
