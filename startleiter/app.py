@@ -79,11 +79,17 @@ async def predict():
     model = tf.keras.models.load_model("models/fly_max_alt_1.h5")
     moments = xr.load_dataset("models/fly_max_moments.nc")
     inputs = standardize(sounding, moments).values[None, ...]
-    max_alt = float(model.predict(inputs)[0].argmax() * ALT_BIN + CIMETTA_ELEVATION)
+    # max_alt = int(model.predict(inputs)[0].argmax() * ALT_BIN + CIMETTA_ELEVATION)
+    pred = np.array(model.predict(inputs)[0])
+    print(pred)
+    print(np.arange(pred.size) * ALT_BIN + CIMETTA_ELEVATION)
+    max_alt = int(np.sum(pred * (np.arange(pred.size) * ALT_BIN + CIMETTA_ELEVATION)))
 
     # max distance
     model = tf.keras.models.load_model("models/fly_max_dist_1.h5")
-    max_dist = float(model.predict(inputs)[0].argmax() * DIST_BIN)
+    # max_dist = int(model.predict(inputs)[0].argmax() * DIST_BIN)
+    pred = np.array(model.predict(inputs)[0])
+    max_dist = int(np.sum(pred * (np.arange(pred.size) * DIST_BIN)))
 
     return {
         "site": "Cimetta",
