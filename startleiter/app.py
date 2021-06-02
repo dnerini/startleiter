@@ -66,7 +66,7 @@ async def basic_view():
 async def predict():
 
     # get inputs
-    sounding = pipeline(16080)
+    sounding = pipeline(16064)
     validtime = sounding.attrs["validtime"]
 
     # fly prob
@@ -104,7 +104,7 @@ async def predict():
 async def explain():
 
     # get inputs
-    sounding = pipeline(16080)
+    sounding = pipeline(16064)
 
     # fly prob
     model = tf.keras.models.load_model("models/fly_prob_1.h5")
