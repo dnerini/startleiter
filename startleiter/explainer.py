@@ -19,7 +19,7 @@ def explainable_plot(sounding, shap_values, prediction):
     U = sounding.sel(variable="U").values * units.knots
     V = sounding.sel(variable="V").values * units.knots
 
-    fig = plt.figure(figsize=(6, 6.5), dpi=300)
+    fig = plt.figure(figsize=(6, 5), dpi=300)
     skew = SkewT(fig, rotation=45)
 
     # SHAP values
@@ -41,19 +41,18 @@ def explainable_plot(sounding, shap_values, prediction):
     skew.plot(p, T, 'k')
     skew.plot(p, Td, '--k')
 
-    skew.ax.set_ylim(1000, 200)
-    skew.ax.set_xlim(max((-30, Td.magnitude.min())), min((35, T.magnitude.max() + 10)))
+    skew.ax.set_ylim(1000, 400)
+    skew.ax.set_xlim(Td.magnitude[0] - 20, Td.magnitude[0] + 20)
 
     cmap = plt.get_cmap('bwr')
     norm = mpl.colors.Normalize(vmin=-1, vmax=1)
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
-    cbaxes = fig.add_axes([0.93, 0.62, 0.02, 0.25])
+    cbaxes = fig.add_axes([0.945, 0.55, 0.02, 0.25])
     cbar = plt.colorbar(sm, cax=cbaxes)
-    cbar.ax.set_title('Positive', fontsize="x-small")
-    cbar.ax.set_xlabel('Negative', fontsize="x-small")
+    cbar.ax.set_title('Favourable', fontsize="x-small")
+    cbar.ax.set_xlabel('Adverse', fontsize="x-small")
     cbar.set_ticks([])
-    #cbar.ax.set_yticklabels(['Negative', 'Positive'], fontsize="x-small")
 
     validtime = f"{sounding.attrs['validtime']:%Y-%m-%d}"
 
