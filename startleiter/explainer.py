@@ -59,7 +59,7 @@ def explainable_plot(sounding, shap_values, prediction):
     text_sx_top = f"""
 Cimetta, Switzerland (1600 masl)
 {validtime}
-Radiosounding 00Z 16064 Crameri"""
+Radiosounding 00Z 16064 Cameri"""
     skew.ax.text(0, 1.01, text_sx_top,
              fontsize="small",
              stretch="condensed",
