@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 from functools import lru_cache
 from io import BytesIO
@@ -5,6 +6,7 @@ from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 import xarray as xr
 from fastapi import FastAPI
@@ -16,6 +18,7 @@ from startleiter.decorators import try_wait
 from startleiter.explainer import compute_shap, explainable_plot
 from startleiter.utils import to_wind_components
 
+LOGGER = logging.getLogger(__name__)
 app = FastAPI()
 
 
@@ -62,9 +65,14 @@ def standardize(da, moments, inverse=False):
         return da * moments.sigma + moments.mu
 
 
-def pipeline(station, leadtime_days):
-    """Clean and preprocess the input data"""
-    time = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+def pipeline(station: str, time: str, leadtime_days: int) -> xr.Dataset:
+    """Get and preprocess the input data"""
+    if time == "latest":
+        time = datetime.utcnow()
+    else:
+        time = pd.to_datetime(time)
+    time = time.replace(hour=0, minute=0, second=0, microsecond=0)
+    LOGGER.info(f"Time: {time}")
     station = STATIONS[station]
     if leadtime_days is not None:
         validtime, sounding = get_last_sounding_forecast(
@@ -85,10 +93,10 @@ async def basic_view():
 
 
 @app.get("/cimetta")
-async def predict_cimetta(leadtime_days: Optional[int] = None):
+async def predict_cimetta(time: str = "latest", leadtime_days: Optional[int] = None):
 
     # get inputs
-    sounding = pipeline("Cameri", leadtime_days)
+    sounding = pipeline("Cameri", time, leadtime_days)
     validtime = sounding.attrs["validtime"]
 
     # fly prob
@@ -123,10 +131,10 @@ async def predict_cimetta(leadtime_days: Optional[int] = None):
 
 
 @app.get("/cimetta_plot")
-async def explain_cimetta(leadtime_days: Optional[int] = None):
+async def explain_cimetta(time: str = "latest", leadtime_days: Optional[int] = None):
 
     # get inputs
-    sounding = pipeline("Cameri", leadtime_days)
+    sounding = pipeline("Cameri", time, leadtime_days)
 
     # fly prob
     model = tf.keras.models.load_model("models/fly_prob_1.h5")
