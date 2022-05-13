@@ -1,6 +1,3 @@
-[netcdf]
-repo = "/home/ned/PycharmProjects/startleiter/data/soundings"
-
 [sources."xcontest"]
 name = "xcontest"
 base_url = "https://www.xcontest.org"
@@ -8,6 +5,10 @@ base_url = "https://www.xcontest.org"
 [sources."uwyo"]
 name = "uwyo"
 base_url = "http://weather.uwyo.edu"
+
+[sources."rucsoundings"]
+name = "rucsoundings"
+base_url = "https://rucsoundings.noaa.gov"
 
 [sites."Cimetta"]
 name = "Cimetta"
@@ -25,12 +26,21 @@ radius = 5000
 
 [stations."Milano"]
 name = "LIML"
-long_name = "Milano"
+long_name = "Milano Linate"
 stid = 16080
 country = "Italy"
 latitude = 45.43
 longitude = 9.28
 elevation = 103.0
+
+[stations."Cameri"]
+name = "LIML"
+long_name = "Novara Cameri"
+stid = 16064
+country = "Italy"
+latitude = 45.53  
+longitude = 8.67
+elevation = 178.0
 
 [stations."Payerne"]
 name = "LSMP"
