@@ -119,9 +119,9 @@ def explainable_plot(sounding, shap_values, prediction, min_pressure_hPa=400):
     source = f"{sounding.attrs['source']}"
 
     text_sx_top = f"""
-Target: Cimetta, Switzerland (1600 masl)
+Site: Cimetta, Switzerland (1600 masl)
 Valid: {validtime}
-Input: {source}"""
+Data: {source}"""
     skew.ax.text(
         0,
         1.01,
