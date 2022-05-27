@@ -99,10 +99,10 @@ async def predict_cimetta(time: str = "latest", leadtime_days: Optional[int] = N
     sounding = pipeline("Cameri", time, leadtime_days)
     validtime = sounding.attrs["validtime"]
 
-    # fly prob
-    model = tf.keras.models.load_model("models/fly_prob_1.h5")
-    moments = xr.load_dataset("models/fly_prob_moments.nc")
-    inputs = standardize(sounding, moments).values[None, ...]
+    # flyability
+    model = tf.keras.models.load_model("models/flyability_1.h5")
+    moments = xr.load_dataset("models/flyability_moments.nc")
+    inputs = standardize(sounding.sel(level=slice(1000, 400)), moments).values[None, ...]
     fly_prob = float(model.predict(inputs)[0][0])
 
     # max altitude
@@ -136,11 +136,11 @@ async def explain_cimetta(time: str = "latest", leadtime_days: Optional[int] = N
     # get inputs
     sounding = pipeline("Cameri", time, leadtime_days)
 
-    # fly prob
-    model = tf.keras.models.load_model("models/fly_prob_1.h5")
-    moments = xr.load_dataset("models/fly_prob_moments.nc")
-    background = np.load("models/fly_prob_1_background.npy")
-    inputs = standardize(sounding, moments).values[None, ...]
+    # flyability
+    model = tf.keras.models.load_model("models/flyability_1.h5")
+    moments = xr.load_dataset("models/flyability_moments.nc")
+    background = np.load("models/flyability_1_background.npy")
+    inputs = standardize(sounding.sel(level=slice(1000, 400)), moments).values[None, ...]
     fly_prob = float(model.predict(inputs)[0][0])
     shap_values = compute_shap(background, model, inputs)[0]
 
