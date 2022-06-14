@@ -9,7 +9,7 @@ setup(
     description="",
     packages=find_packages(),
     install_requires=[
-        "beautifulsoup4", "matplotlib", "metpy", "numpy", "netcdf4", "pandas", "psutil", "psycopg2-binary", "requests", "selenium", "sqlalchemy",
-        "toml", "fastapi", "uvicorn", "bottleneck", "tensorflow-cpu", "shap"
+        "beautifulsoup4", "matplotlib", "metpy", "numpy", "netcdf4", "pandas>=1.4.2", "psutil", "psycopg2-binary", "requests", "selenium", "sqlalchemy",
+        "toml", "fastapi", "uvicorn", "bottleneck", "tensorflow-cpu", "shap", "xarray>=2022.3.0"
     ],
 )
