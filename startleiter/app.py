@@ -31,6 +31,13 @@ ALT_BINS = [(x + CIMETTA_ELEVATION) // 500 * 500 for x in ALT_BINS]
 
 STATIONS = CFG["stations"]
 
+MODEL_FLYABILITY = tf.keras.models.load_model("models/flyability_1.h5")
+MODEL_MAX_ALT = tf.keras.models.load_model("models/fly_max_alt_1.h5")
+MODEL_MAX_DIST = tf.keras.models.load_model("models/fly_max_dist_1.h5")
+
+MOMENTS_FLYABILITY = xr.load_dataset("models/flyability_moments.nc")
+MOMENTS_MAX = xr.load_dataset("models/fly_max_moments.nc")
+
 
 @lru_cache(maxsize=3)
 @try_wait()
@@ -51,7 +58,7 @@ def preprocess(ds):
     # dew point temperature depression
     ds["DWPD"] = ds["TEMP"] - ds["DWPT"]
     ds["WOY"] = ds.attrs["validtime"].isocalendar().week
-    (ds, ) = xr.broadcast(ds)
+    (ds,) = xr.broadcast(ds)
     return (
         ds[["TEMP", "DWPD", "U", "V", "WOY"]]
         .rename({"PRES": "level"})
@@ -106,20 +113,13 @@ async def predict_cimetta(time: str = "latest", leadtime_days: Optional[int] = N
     validtime = sounding.attrs["validtime"]
 
     # flyability
-    model = tf.keras.models.load_model("models/flyability_1.h5")
-    moments = xr.load_dataset("models/flyability_moments.nc")
-    inputs = standardize(sounding, moments).values[None, ...]
-    fly_prob = float(model.predict(inputs)[0][0])
+    inputs = standardize(sounding, MOMENTS_FLYABILITY).values[None, ...]
+    fly_prob = float(MODEL_FLYABILITY.predict(inputs)[0][0])
 
-    # max altitude
-    moments = xr.load_dataset("models/fly_max_moments.nc")
-    inputs = standardize(sounding, moments).values[None, ...]
-    model = tf.keras.models.load_model("models/fly_max_alt_1.h5")
-    max_alt = ALT_BINS[int(model.predict(inputs)[0].argmax())]
-
-    # max distance
-    model = tf.keras.models.load_model("models/fly_max_dist_1.h5")
-    max_dist = DIST_BINS[int(model.predict(inputs)[0].argmax())]
+    # max altitude and distance
+    inputs = standardize(sounding, MOMENTS_MAX).values[None, ...]
+    max_alt = ALT_BINS[int(MODEL_MAX_ALT.predict(inputs)[0].argmax())]
+    max_dist = DIST_BINS[int(MODEL_MAX_DIST.predict(inputs)[0].argmax())]
 
     return {
         "site": "Cimetta",
@@ -137,12 +137,10 @@ async def explain_cimetta(time: str = "latest", leadtime_days: Optional[int] = N
     sounding = pipeline("Cameri", time, leadtime_days)
 
     # flyability
-    model = tf.keras.models.load_model("models/flyability_1.h5")
-    moments = xr.load_dataset("models/flyability_moments.nc")
     background = np.load("models/flyability_1_background.npy")
-    inputs = standardize(sounding, moments).values[None, ...]
-    fly_prob = float(model.predict(inputs)[0][0])
-    shap_values = compute_shap(background, model, inputs)[0]
+    inputs = standardize(sounding, MOMENTS_FLYABILITY).values[None, ...]
+    fly_prob = float(MODEL_FLYABILITY.predict(inputs)[0][0])
+    shap_values = compute_shap(background, MODEL_FLYABILITY, inputs)[0]
 
     # plot  shap
     fig = explainable_plot(sounding, shap_values, fly_prob)
