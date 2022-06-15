@@ -32,14 +32,14 @@ ALT_BINS = [(x + CIMETTA_ELEVATION) // 500 * 500 for x in ALT_BINS]
 STATIONS = CFG["stations"]
 
 
-@lru_cache
+@lru_cache(maxsize=3)
 @try_wait()
 def get_last_sounding(station, time):
     data = list(uwyo.scrape(station, time).items())[0]
     return data[0], data[1]["data"]
 
 
-@lru_cache
+@lru_cache(maxsize=3)
 def get_last_sounding_forecast(station, time, leadtime_hrs):
     leadtime = timedelta(hours=leadtime_hrs)
     data = list(rucsoundings.scrape(station, time, leadtime).items())[0]
