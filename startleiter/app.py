@@ -81,8 +81,12 @@ def standardize(da, moments, inverse=False):
 @lru_cache(maxsize=6)
 def pipeline(station: str, time: str, leadtime_days: int) -> xr.Dataset:
     """Get and preprocess the input data"""
-    if time == "latest":
+    if time in ["latest", "today"]:
         time = datetime.utcnow()
+        leadtime_days = None
+    elif time == "tomorrow":
+        time = datetime.utcnow()
+        leadtime_days = 1
     else:
         time = pd.to_datetime(time)
     time = time.replace(hour=0, minute=0, second=0, microsecond=0)
