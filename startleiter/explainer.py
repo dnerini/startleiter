@@ -16,7 +16,9 @@ def compute_shap(background, model, inputs):
     return e.shap_values(inputs)
 
 
-def explainable_plot(sounding, shap_values, prediction, min_pressure_hPa=400):
+def explainable_plot(
+    sounding, shap_values, flyability, max_alt_m, max_dist_km, min_pressure_hPa
+):
     # Assign units
     p = sounding.level.values * units.hPa
     T = sounding.sel(variable="TEMP").values * units.degC
@@ -24,7 +26,7 @@ def explainable_plot(sounding, shap_values, prediction, min_pressure_hPa=400):
     U = sounding.sel(variable="U").values * units.knots
     V = sounding.sel(variable="V").values * units.knots
 
-    fig = plt.figure(figsize=(4.6, 5), dpi=300)
+    fig = plt.figure(figsize=(4.5, 5.5), dpi=300)
     skew = SkewT(fig, rotation=45, aspect=100)
 
     # SHAP values
@@ -87,13 +89,14 @@ def explainable_plot(sounding, shap_values, prediction, min_pressure_hPa=400):
     skew.ax.set_ylabel("Pressure (hPa)", fontdict=dict(size="small"))
 
     skew.ax.set_ylim(1000, min_pressure_hPa)
-    skew.ax.set_xlim(Td.magnitude[0] - 18, Td.magnitude[0] + 17)
+    skew.ax.set_xlim(T.magnitude[0] - 25, T.magnitude[0] + 10)
 
+    # Colorbar
     cmap = plt.get_cmap("bwr")
     norm = mpl.colors.Normalize(vmin=-1, vmax=1)
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
-    cbaxes = fig.add_axes([0.93, 0.57, 0.015, 0.25])
+    cbaxes = fig.add_axes([0.19, 0.22, 0.015, 0.1])
     cbar = plt.colorbar(sm, cax=cbaxes)
     cbar.set_ticks([])
     cbar.ax.text(
@@ -118,10 +121,22 @@ def explainable_plot(sounding, shap_values, prediction, min_pressure_hPa=400):
     validtime = f"{sounding.attrs['validtime']:%Y-%m-%d}"
     source = f"{sounding.attrs['source']}"
 
+    text_title = f"""
+Startleiter"""
+    skew.ax.text(
+        0,
+        1.05,
+        text_title,
+        fontsize="xx-large",
+        stretch="condensed",
+        linespacing=1.1,
+        va="bottom",
+        ha="left",
+        transform=skew.ax.transAxes,
+    )
+
     text_sx_top = f"""
-Site: Cimetta, Switzerland (1600 masl)
-Valid: {validtime}
-Data: {source}"""
+Cimetta, Switzerland (1600 masl)"""
     skew.ax.text(
         0,
         1.01,
@@ -129,18 +144,18 @@ Data: {source}"""
         fontsize="small",
         stretch="condensed",
         linespacing=1.1,
+        ha="left",
         va="bottom",
         transform=skew.ax.transAxes,
     )
 
     text_dx_top = f"""
-flyability {prediction * 100:.0f}%"""
+{validtime}"""
     skew.ax.text(
         1.0,
         1.01,
         text_dx_top,
         fontsize="small",
-        fontweight="bold",
         stretch="condensed",
         linespacing=1.1,
         ha="right",
@@ -148,22 +163,22 @@ flyability {prediction * 100:.0f}%"""
         transform=skew.ax.transAxes,
     )
 
+    plt.subplots_adjust(bottom=0.2)
+
     text_sx_bottom = f"""
-Credits:
-    - Radiosoundings: weather.uwyo.edu
-    - GFS soundings: rucsoundings.noaa.gov
-    - Flight data: xcontest.org
-    - Impact score: github.com/slundberg/shap
-    - SkewT plot: unidata.github.io/MetPy"""
+Flyability: {flyability * 100:.0f}%
+Max flying height: {max_alt_m} m
+Max flying distance: {max_dist_km} km
+Input: {source}"""
     skew.ax.text(
-        0.01,
-        0.01,
+        0.0,
+        -0.1,
         text_sx_bottom,
-        fontsize="xx-small",
+        fontsize="small",
         stretch="condensed",
         linespacing=1.1,
         ha="left",
-        va="bottom",
+        va="top",
         transform=skew.ax.transAxes,
     )
 

@@ -25,6 +25,7 @@ app = FastAPI()
 # TODO: do not hardcode
 ALT_BINS = [0, 500, 1000, 1500, 2000]
 DIST_BINS = [0, 50, 100, 150]
+PRESSURE_MIN_hPa = 400
 
 CIMETTA_ELEVATION = 1600
 ALT_BINS = [(x + CIMETTA_ELEVATION) // 500 * 500 for x in ALT_BINS]
@@ -81,7 +82,9 @@ def standardize(da, moments, inverse=False):
 @lru_cache(maxsize=6)
 def pipeline(station: str, time: str, leadtime_days: int) -> xr.Dataset:
     """Get and preprocess the input data"""
-    if time in ["latest", "today"]:
+    if time == "latest":
+        time = datetime.utcnow()
+    elif time == "today":
         time = datetime.utcnow()
         leadtime_days = None
     elif time == "tomorrow":
@@ -102,7 +105,7 @@ def pipeline(station: str, time: str, leadtime_days: int) -> xr.Dataset:
         sounding.attrs["source"] = f"Radiosounding 00Z {station['long_name']}"
     sounding.attrs["validtime"] = validtime
     sounding = preprocess(sounding)
-    sounding = sounding.sel(level=slice(1000, 400))
+    sounding = sounding.sel(level=slice(1000, PRESSURE_MIN_hPa))
     return sounding
 
 
@@ -147,8 +150,13 @@ async def explain_cimetta(time: str = "latest", leadtime_days: Optional[int] = N
     fly_prob = float(MODEL_FLYABILITY.predict(inputs)[0][0])
     shap_values = compute_shap(BACKGROUND, MODEL_FLYABILITY, inputs)[0]
 
+    # max altitude and distance
+    inputs = standardize(sounding, MOMENTS_MAX).values[None, ...]
+    max_alt = ALT_BINS[int(MODEL_MAX_ALT.predict(inputs)[0].argmax())]
+    max_dist = DIST_BINS[int(MODEL_MAX_DIST.predict(inputs)[0].argmax())]
+
     # plot  shap
-    fig = explainable_plot(sounding, shap_values, fly_prob)
+    fig = explainable_plot(sounding, shap_values, fly_prob, max_alt, max_dist, min_pressure_hPa=PRESSURE_MIN_hPa)
     image_file = BytesIO()
     plt.savefig(image_file)
     plt.close(fig)
