@@ -41,14 +41,13 @@ MOMENTS_MAX = xr.load_dataset("models/fly_max_moments.nc")
 BACKGROUND = np.load("models/flyability_1_background.npy")
 
 
-@lru_cache(maxsize=3)
 @try_wait()
 def get_last_sounding(station, time):
     data = list(uwyo.scrape(station, time).items())[0]
     return data[0], data[1]["data"]
 
 
-@lru_cache(maxsize=3)
+@try_wait()
 def get_last_sounding_forecast(station, time, leadtime_hrs):
     leadtime = timedelta(hours=leadtime_hrs)
     data = list(rucsoundings.scrape(station, time, leadtime).items())[0]
@@ -79,6 +78,7 @@ def standardize(da, moments, inverse=False):
         return da * moments.sigma + moments.mu
 
 
+@lru_cache(maxsize=6)
 def pipeline(station: str, time: str, leadtime_days: int) -> xr.Dataset:
     """Get and preprocess the input data"""
     if time == "latest":
