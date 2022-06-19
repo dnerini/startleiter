@@ -38,6 +38,8 @@ MODEL_MAX_DIST = tf.keras.models.load_model("models/fly_max_dist_1.h5")
 MOMENTS_FLYABILITY = xr.load_dataset("models/flyability_moments.nc")
 MOMENTS_MAX = xr.load_dataset("models/fly_max_moments.nc")
 
+BACKGROUND = np.load("models/flyability_1_background.npy")
+
 
 @lru_cache(maxsize=3)
 @try_wait()
@@ -137,10 +139,9 @@ async def explain_cimetta(time: str = "latest", leadtime_days: Optional[int] = N
     sounding = pipeline("Cameri", time, leadtime_days)
 
     # flyability
-    background = np.load("models/flyability_1_background.npy")
     inputs = standardize(sounding, MOMENTS_FLYABILITY).values[None, ...]
     fly_prob = float(MODEL_FLYABILITY.predict(inputs)[0][0])
-    shap_values = compute_shap(background, MODEL_FLYABILITY, inputs)[0]
+    shap_values = compute_shap(BACKGROUND, MODEL_FLYABILITY, inputs)[0]
 
     # plot  shap
     fig = explainable_plot(sounding, shap_values, fly_prob)
