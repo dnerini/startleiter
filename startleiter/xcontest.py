@@ -2,7 +2,6 @@ import logging
 import os
 import random
 import time
-from copy import copy
 
 
 from bs4 import BeautifulSoup
@@ -116,7 +115,7 @@ def flight_details(flight, browser):
     url = BASE_URL + href
     LOGGER.debug(url)
 
-    browser.delete_all_cookies()
+    # browser.delete_all_cookies()  # after this, will need to login again!
     browser.get(url + "#fd=flight")
     loaded = scr.wait_till_loaded(browser, url)
     if not loaded:
@@ -151,7 +150,6 @@ def parse_flights(browser, pace):
     """
     global COUNTER
 
-    browser = copy(browser)
     soup = BeautifulSoup(browser.page_source, "html.parser")
     table = soup.find("table", attrs={"class": "flights"})
     table_body = table.find("tbody")
