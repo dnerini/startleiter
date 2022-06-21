@@ -26,7 +26,7 @@ jobs:
 
       - name: Install startleiter
         working-directory: ${{github.workspace}}
-        run: pip install .
+        run: pip install -e .
 
       - name: Run data extraction
         env:
