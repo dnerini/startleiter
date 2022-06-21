@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -12,7 +13,7 @@ from sqlalchemy.orm import relationship, sessionmaker
 
 from startleiter import config as CFG
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 Base = declarative_base()
 
@@ -110,10 +111,10 @@ class Sounding(Base):
 
 
 class Database:
-
     def __init__(self, source, site=None, station=None):
-        db_uri = CFG["postgresql"]["uri"]
-        self.engine = create_engine(db_uri, echo=False)
+        db_url = os.environ.get("DATABASE_URL")
+        db_url = db_url.replace("postgres://", "postgresql://")
+        self.engine = create_engine(db_url, echo=False)
 
         Session = sessionmaker(self.engine)
         self.session = Session()
@@ -133,7 +134,7 @@ class Database:
             self.session.add(obj)
             self.session.commit()
         else:
-            logger.debug(f"Source {source['name']} already exists.")
+            LOGGER.debug(f"Source {source['name']} already exists.")
         return obj.id
 
     def insert_site(self, site):
@@ -144,7 +145,7 @@ class Database:
             self.session.add(obj)
             self.session.commit()
         else:
-            logger.debug(f"Site {site['name']} already exists.")
+            LOGGER.debug(f"Site {site['name']} already exists.")
         return obj.id
 
     def insert_station(self, station):
@@ -155,7 +156,7 @@ class Database:
             self.session.add(obj)
             self.session.commit()
         else:
-            logger.debug(f"Station {station['name']} already exists.")
+            LOGGER.debug(f"Station {station['name']} already exists.")
         return obj.id
 
     def insert_sounding(self, validtime, sounding, data_fn=None, overwrite=False):
@@ -170,7 +171,7 @@ class Database:
             self.session.add(obj)
             self.session.commit()
         else:
-            logger.debug(f"Sounding {indices['datetime']} already exists.")
+            LOGGER.debug(f"Sounding {indices['datetime']} already exists.")
         return obj.id
 
     def insert_soundings(self, soundings):
@@ -181,14 +182,15 @@ class Database:
     def save_sounding_data(self, soundings):
         data = [sound["data"] for sound in soundings.values()]
         validtimes = list(soundings.keys())
-        data = xr.concat(data, "validtime")
+        if len(data) > 1:
+            data = xr.concat(data, "validtime")
         data = data.assign_coords(validtime=validtimes)
         outdir = Path(CFG["netcdf"]["repo"])
         outdir.mkdir(exist_ok=True)
         fn = f"sounding-{self.source_id}-{self.station_id}-{validtimes[0]:%Y%m}.nc"
         fn = outdir / fn
         data.to_netcdf(fn)
-        logger.info(f"Saved: {fn}")
+        LOGGER.info(f"Saved: {fn}")
         return fn
 
     def insert_flights(self, flights):
@@ -197,17 +199,27 @@ class Database:
         self.session.commit()
 
     def query_last_flight(self):
-        obj = self.session.query(Flight).filter_by(site_id=self.site_id).order_by(Flight.flno.desc()).first()
+        obj = (
+            self.session.query(Flight)
+            .filter_by(site_id=self.site_id)
+            .order_by(Flight.flno.desc())
+            .first()
+        )
         flight_no = 0 if obj is None else obj.flno
         if flight_no > 0:
-            logger.info(f"Starting querying from flight no. {flight_no}.")
+            LOGGER.info(f"Starting querying from flight no. {flight_no}.")
         return flight_no
 
     def query_last_sounding(self, default_start=datetime(2005, 12, 31, 0)):
-        obj = self.session.query(Sounding).filter_by(station_id=self.station_id).order_by(Sounding.datetime.desc()).first()
+        obj = (
+            self.session.query(Sounding)
+            .filter_by(station_id=self.station_id)
+            .order_by(Sounding.datetime.desc())
+            .first()
+        )
         start_date = default_start if obj is None else obj.datetime
         if start_date > default_start:
-            logger.info(f"Starting querying from {start_date}.")
+            LOGGER.info(f"Starting querying from {start_date}.")
         return start_date
 
     def to_pandas(self):
@@ -251,35 +263,59 @@ def reformat_xcontest(flights, source_id, site_id):
     out = []
     for flight in flights:
         try:
-            datetime_str = f"{flight[2]}+00:00" if flight[2][-3:] == "UTC" else flight[2]
+            datetime_str = (
+                f"{flight[2]}+00:00" if flight[2][-3:] == "UTC" else flight[2]
+            )
             airtime = flight[11] if flight[11] is None else flight[11].split(":")[:2]
-            altitude = flight[12] if flight[12] is None else flight[12].replace(" m", "")
-            alt_gain = flight[13] if flight[13] is None else flight[13].replace(" m", "")
-            max_climb = flight[14] if flight[14] is None else flight[14].replace(" m/s", "")
-            max_sink = flight[15] if flight[15] is None else flight[15].replace(" m/s", "")
-            tracklog_length = flight[16] if flight[16] is None else flight[16].replace(" km", "")
+            altitude = (
+                flight[12] if flight[12] is None else flight[12].replace(" m", "")
+            )
+            alt_gain = (
+                flight[13] if flight[13] is None else flight[13].replace(" m", "")
+            )
+            max_climb = (
+                flight[14] if flight[14] is None else flight[14].replace(" m/s", "")
+            )
+            max_sink = (
+                flight[15] if flight[15] is None else flight[15].replace(" m/s", "")
+            )
+            tracklog_length = (
+                flight[16] if flight[16] is None else flight[16].replace(" km", "")
+            )
             free_distance = flight[17] if flight[17] is None else flight[17].split("/")
-            out.append({
-                "source_id": source_id,
-                "site_id": site_id,
-                "flid": flight[0],
-                "flno": flight[1],
-                "datetime": datetime.strptime(datetime_str, "%d.%m.%y %H:%MUTC%z"),
-                "pilot": flight[3][2:],
-                "route": flight[10],
-                "length_km": float(flight[6].replace(" km", "")),
-                "points": float(flight[7].replace(" p.", "")),
-                "glider": flight[9] if flight[9] else None,
-                "glider_cat": flight[8],
-                "airtime": airtime if airtime is None else timedelta(hours=int(airtime[0]), minutes=int(airtime[1])),
-                "max_altitude_m": altitude if altitude is None else int(altitude),
-                "max_alt_gain_m": alt_gain if alt_gain is None else int(alt_gain),
-                "max_climb_ms": max_climb if max_climb is None else float(max_climb),
-                "max_sink_ms": max_sink if max_sink is None else float(max_sink),
-                "tracklog_length_km": tracklog_length if tracklog_length is None else float(tracklog_length),
-                "free_distance_1_km": free_distance if free_distance is None else float(free_distance[0].replace(" km", "")),
-                "free_distance_2_km": free_distance if free_distance is None else float(free_distance[1].replace(" km", "")),
-                })
+            out.append(
+                {
+                    "source_id": source_id,
+                    "site_id": site_id,
+                    "flid": flight[0],
+                    "flno": flight[1],
+                    "datetime": datetime.strptime(datetime_str, "%d.%m.%y %H:%MUTC%z"),
+                    "pilot": flight[3][2:],
+                    "route": flight[10],
+                    "length_km": float(flight[6].replace(" km", "")),
+                    "points": float(flight[7].replace(" p.", "")),
+                    "glider": flight[9] if flight[9] else None,
+                    "glider_cat": flight[8],
+                    "airtime": airtime
+                    if airtime is None
+                    else timedelta(hours=int(airtime[0]), minutes=int(airtime[1])),
+                    "max_altitude_m": altitude if altitude is None else int(altitude),
+                    "max_alt_gain_m": alt_gain if alt_gain is None else int(alt_gain),
+                    "max_climb_ms": max_climb
+                    if max_climb is None
+                    else float(max_climb),
+                    "max_sink_ms": max_sink if max_sink is None else float(max_sink),
+                    "tracklog_length_km": tracklog_length
+                    if tracklog_length is None
+                    else float(tracklog_length),
+                    "free_distance_1_km": free_distance
+                    if free_distance is None
+                    else float(free_distance[0].replace(" km", "")),
+                    "free_distance_2_km": free_distance
+                    if free_distance is None
+                    else float(free_distance[1].replace(" km", "")),
+                }
+            )
         except ValueError:
-            logger.error(f"Could not parse {flight}")
+            LOGGER.error(f"Could not parse {flight}")
     return out
