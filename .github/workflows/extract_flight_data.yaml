@@ -5,8 +5,11 @@ on:
   schedule:
     - cron: '9 3 * * *'
 
+defaults:
+  run:
+    shell: bash -l {0}
 jobs:
-  build:
+  extraction:
     runs-on: ubuntu-latest
 
     steps:
