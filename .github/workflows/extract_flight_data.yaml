@@ -1,0 +1,35 @@
+name: Extract Flight Data
+
+on:
+  schedule:
+    - cron: '9 3 * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Create conda environment
+        uses: mamba-org/provision-with-micromamba@main
+        with:
+          environment-file: envs/scrape.yaml
+
+      - name: Install startleiter
+        working-directory: ${{github.workspace}}
+        run: pip install .
+
+      - name: Run data extraction
+        env:
+          XCONTEST_USERNAME: ${{ secrets.XCONTEST_USERNAME }}
+          XCONTEST_PASSWORD: ${{ secrets.XCONTEST_PASSWORD }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # TODO: do not hardcode DATABASE_URL, use instead:
+          # DATABASE_URL=$(heroku config:get DATABASE_URL -a startleiter) 
+        working-directory: ${{github.workspace}}
+        run: python startleiter/xcontest.py

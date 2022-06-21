@@ -1,7 +1,8 @@
 __pycache__
 *.pyc
+*.log
 data/
 envs/
 notebooks/
 tests/
-*.log
+.github/
