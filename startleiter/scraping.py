@@ -6,7 +6,7 @@ import psutil
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 def launch_browser():
@@ -82,12 +82,12 @@ def pacing(n, ntot, t0, pace, total_sleep):
     time_lapsed = time.monotonic() - t0
     done = n + 1
     togo = ntot - done
-    logger.info(f"Averaging {done / time_lapsed * 3600:.0f} requests per hour")
+    LOGGER.debug(f"Averaging {done / time_lapsed * 3600:.0f} requests per hour")
     if togo > 0:
         time_togo = (done + togo) / pace * 3600 - time_lapsed
         spacing = max(0, time_togo / togo - (time_lapsed - total_sleep) / done)
         if spacing > 0:
-            logger.info(f"Slowing down... wait {spacing:.1f} seconds...")
+            LOGGER.debug(f"Slowing down... wait {spacing:.1f} seconds...")
             time.sleep(spacing)
             total_sleep += spacing
     return total_sleep

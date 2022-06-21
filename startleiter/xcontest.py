@@ -1,10 +1,16 @@
 import logging
+import os
+import random
 import time
+from copy import copy
 
-import requests
+
 from bs4 import BeautifulSoup
-
-from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
+from selenium.common.exceptions import (
+    TimeoutException,
+    StaleElementReferenceException,
+    WebDriverException,
+)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -13,10 +19,11 @@ import startleiter.scraping as scr
 from startleiter.database import Database
 from startleiter import config as CFG
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
+NUM_FLIGHTS_ON_PAGE = 50
 COUNTER = 0
-STOP_AFTER = 1e6
+STOP_AFTER = 80
 BASE_URL = "https://www.xcontest.org"
 SEARCH_URL = BASE_URL + "/world/en/flights-search"
 DEFAULT_QUERY = {
@@ -37,6 +44,17 @@ DEFAULT_QUERY = {
 }
 
 
+def login_xcontest(browser):
+    username = os.environ.get("XCONTEST_USERNAME")
+    password = os.environ.get("XCONTEST_PASSWORD")
+    browser.get("https://www.xcontest.org")
+    browser.find_element(By.ID, "login-username").send_keys(username)
+    browser.find_element(By.ID, "login-password").send_keys(password)
+    browser.find_element(By.CLASS_NAME, "submit").submit()
+    time.sleep(3)
+    return browser
+
+
 def flight_summary(table_row):
     """Parse flight summary data from a given query.
 
@@ -55,7 +73,7 @@ def flight_summary(table_row):
     glider = cols[7].find_all("div")[0].get("title")
     route = cols[4].find_all("div")[0].get("title")
     summary = [flid, *text, glider, route]
-    logger.info(summary)
+    LOGGER.debug(summary)
     return summary
 
 
@@ -96,46 +114,32 @@ def flight_details(flight, browser):
     if not href:
         return None
     url = BASE_URL + href
-    logger.info(url)
+    LOGGER.debug(url)
 
     browser.delete_all_cookies()
-    try:
-        browser.get(url + "#fd=flight")
-    except Exception as e:
-        logger.exception(e)
-        raise
+    browser.get(url + "#fd=flight")
     loaded = scr.wait_till_loaded(browser, url)
     if not loaded:
-        logger.error("Failed to load Flight Details")
-        return None
-    try:
-        element = WebDriverWait(browser, 20, ignored_exceptions=StaleElementReferenceException).until(
-            EC.element_to_be_clickable((By.LINK_TEXT, "Flight"))
-        )
-    except TimeoutException:
-        logger.exception("Timeout while looking for Flight Details")
-        raise
+        LOGGER.error("Failed to load Flight Details")
+        raise WebDriverException
+    element = WebDriverWait(
+        browser, 20, ignored_exceptions=StaleElementReferenceException
+    ).until(EC.element_to_be_clickable((By.LINK_TEXT, "Flight")))
     element.click()
     soup = BeautifulSoup(browser.page_source, "html.parser")
     subsoup = soup.find("div", attrs={"class": "XCmoreInfo"})
-    try:
-        details = _parse_table(subsoup, "XCinfo")
-    except Exception as ex:
-        logger.exception(ex)
-        raise
+    details = _parse_table(subsoup, "XCinfo")
     details = [detail[0] if isinstance(detail, list) else None for detail in details]
-    logger.info(details)
+    LOGGER.debug(details)
     return details
 
 
-def parse_flights(query_url, browser, pace=120):
+def parse_flights(browser, pace):
     """Loop all flights for a given query on xcontest.org, extract
     flight summary and details.
 
     Parameters
     ----------
-    query_url: str
-        A search query url for xcontest.org.
     browser: selenium.WebDriver
         A selenium-webdriver client.
     pace: int
@@ -147,9 +151,8 @@ def parse_flights(query_url, browser, pace=120):
     """
     global COUNTER
 
-    page = requests.get(query_url)
-    page.raise_for_status()
-    soup = BeautifulSoup(page.content, "html.parser")
+    browser = copy(browser)
+    soup = BeautifulSoup(browser.page_source, "html.parser")
     table = soup.find("table", attrs={"class": "flights"})
     table_body = table.find("tbody")
     flights = table_body.find_all("tr")
@@ -165,24 +168,22 @@ def parse_flights(query_url, browser, pace=120):
         # Parse flight summary
         try:
             summary = flight_summary(flight)
-        except AttributeError:
-            logger.error(f"Failed to parse flight {n}")
-            continue
-        except IndexError:
-            logger.error(f"Failed to parse flight {n}")
+        except (AttributeError, IndexError):
+            LOGGER.error(f"Failed to parse flight {n}")
             continue
         flight_data += summary
 
         # Parse flight details
         try:
             details = flight_details(flight, browser)
-        except AttributeError:
-            logger.error(f"Failed to parse flight {n} details")
-            details = [None, ] * 7
-        except TimeoutException:
+        except (AttributeError, TimeoutException, WebDriverException):
+            print("F", end="", flush=True)
             consecutive_timeouts += 1
-            details = [None, ] * 7
+            details = [
+                None,
+            ] * 7
         else:
+            print(".", end="", flush=True)
             consecutive_timeouts = 0
         flight_data += details
 
@@ -192,53 +193,61 @@ def parse_flights(query_url, browser, pace=120):
         # TODO: Parse flight track
 
         flights_data.append(flight_data)
-
         total_sleep = scr.pacing(n, len(flights), t0, pace, total_sleep)
-
         COUNTER += 1
+
         if COUNTER == STOP_AFTER:
             break
 
+    print("")
     return flights_data
 
 
-def scrape(source, site, pace):
-    """Main scraping routine for xcontest.org
-    """
+def main(source, site, pace):
+    """Main scraping routine for xcontest.org"""
     # Connect to database
     db = Database(source, site)
 
     browser = scr.launch_browser()
+    browser = login_xcontest(browser)
     time_start = time.monotonic()
 
     try:
         id_start = db.query_last_flight()
-        while id_start < STOP_AFTER:
-            logger.info(f"XContest Flight Chunk {id_start} to {id_start + min(STOP_AFTER - 1, 50)}")
+        while COUNTER < STOP_AFTER:
+            LOGGER.info(
+                f"XContest Flight Chunk {id_start} to {id_start + min(STOP_AFTER - 1, NUM_FLIGHTS_ON_PAGE)}"
+            )
             this_query = {
                 "list[start]": id_start,
                 "filter[point]": f"{site['longitude']}%20{site['latitude']}",
                 "filter[radius]": site["radius"],
             }
             query_url = scr.build_query(SEARCH_URL, DEFAULT_QUERY, this_query)
-            logger.debug(query_url)
-            flight_chunk = parse_flights(query_url, browser, pace)
+            LOGGER.debug(query_url)
+            browser.get(query_url)
+            flight_chunk = parse_flights(browser, pace)
             if flight_chunk:
                 db.insert_flights(flight_chunk)
-                id_start += 50
+                id_start += NUM_FLIGHTS_ON_PAGE
             else:
                 break
 
     except TimeoutException:
         time_lapsed = time.monotonic() - time_start
-        logger.error(f"Timeout after {COUNTER} queries and {int(time_lapsed / 60)} minutes.")
+        LOGGER.error(
+            f"Timeout after {COUNTER} queries and {int(time_lapsed / 60)} minutes."
+        )
+
+    else:
+        time_lapsed = time.monotonic() - time_start
+        LOGGER.info(
+            f"Successfully retrieved {COUNTER} flight records in {time_lapsed / 60:.1f} minutes."
+        )
 
     finally:
         browser.quit()
         # cleanup()
-        df = db.to_pandas()
-        print(df)
-        print(df.describe())
 
 
 if __name__ == "__main__":
@@ -247,13 +256,15 @@ if __name__ == "__main__":
     logging.basicConfig(
         # format="%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s",
         format="%(levelname)-4s [%(filename)s:%(lineno)d] %(message)s",
-        datefmt='%Y-%m-%d:%H:%M:%S',
-        level=logging.INFO
+        datefmt="%Y-%m-%d:%H:%M:%S",
+        level=logging.INFO,
     )
 
     source = CFG["sources"]["xcontest"]
-    site = CFG["sites"]["Carì"]
+    site_name, site = random.choice(list(CFG["sites"].items()))
+    # site_name, site = "Carì", CFG["sites"]["Carì"]
+    LOGGER.info(f"Extracting data for site {site_name}.")
 
     # Set pace and start main routine
-    pace = 120  # requests / hour
-    scrape(source, site, pace)
+    pace = 400  # requests / hour
+    main(source, site, pace)
