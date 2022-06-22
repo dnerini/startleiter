@@ -22,7 +22,7 @@ LOGGER = logging.getLogger(__name__)
 
 NUM_FLIGHTS_ON_PAGE = 50
 COUNTER = 0
-STOP_AFTER = 80
+STOP_AFTER = 50
 BASE_URL = "https://www.xcontest.org"
 SEARCH_URL = BASE_URL + "/world/en/flights-search"
 DEFAULT_QUERY = {
