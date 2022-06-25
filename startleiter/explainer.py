@@ -88,8 +88,9 @@ def explainable_plot(
     skew.ax.set_xlabel("Temperature (\N{DEGREE CELSIUS})", fontdict=dict(size="small"))
     skew.ax.set_ylabel("Pressure (hPa)", fontdict=dict(size="small"))
 
+    Tmax = T.magnitude.max()
     skew.ax.set_ylim(1000, min_pressure_hPa)
-    skew.ax.set_xlim(T.magnitude[0] - 25, T.magnitude[0] + 10)
+    skew.ax.set_xlim(Tmax - 28, Tmax + 7)
 
     # Colorbar
     cmap = plt.get_cmap("bwr")
