@@ -119,7 +119,6 @@ def flight_details(flight, browser):
     browser.get(url + "#fd=flight")
     loaded = scr.wait_till_loaded(browser, url)
     if not loaded:
-        LOGGER.error("Failed to load Flight Details")
         raise WebDriverException
     element = WebDriverWait(
         browser, 20, ignored_exceptions=StaleElementReferenceException
@@ -174,12 +173,13 @@ def parse_flights(browser, pace):
         # Parse flight details
         try:
             details = flight_details(flight, browser)
-        except (AttributeError, TimeoutException, WebDriverException):
+        except (AttributeError, TimeoutException, WebDriverException) as e:
             print("F", end="", flush=True)
-            consecutive_timeouts += 1
             details = [
                 None,
             ] * 7
+            if e.__class__.__name__ == "TimeoutException":
+                consecutive_timeouts += 1
         else:
             print(".", end="", flush=True)
             consecutive_timeouts = 0
