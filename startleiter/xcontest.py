@@ -175,9 +175,7 @@ def parse_flights(browser, pace):
             details = flight_details(flight, browser)
         except (AttributeError, TimeoutException, WebDriverException) as e:
             print("F", end="", flush=True)
-            details = [
-                None,
-            ] * 7
+            details = [None] * 7
             if e.__class__.__name__ == "TimeoutException":
                 consecutive_timeouts += 1
         else:
