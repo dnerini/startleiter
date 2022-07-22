@@ -19,7 +19,7 @@ from startleiter.database import Database
 from startleiter import config as CFG
 
 LOGGER = logging.getLogger(__name__)
-
+TIME_START = time.monotonic()
 NUM_FLIGHTS_ON_PAGE = 50
 COUNTER = 0
 STOP_AFTER = 50
@@ -153,6 +153,11 @@ def parse_flights(browser, pace):
     table = soup.find("table", attrs={"class": "flights"})
     table_body = table.find("tbody")
     flights = table_body.find_all("tr")
+    if len(flights) < NUM_FLIGHTS_ON_PAGE:
+        LOGGER.warning(
+            f"Not enough flights to retrieve ({len(flights)} < {NUM_FLIGHTS_ON_PAGE})"
+        )
+        return None
 
     t0 = time.monotonic()
     total_sleep = 0
@@ -199,19 +204,18 @@ def parse_flights(browser, pace):
     return flights_data
 
 
-def main(source, site, pace):
+def main(site, pace):
     """Main scraping routine for xcontest.org"""
     # Connect to database
-    db = Database(source, site)
+    db = Database(CFG["sources"]["xcontest"], site)
 
     browser = scr.launch_browser()
     browser = login_xcontest(browser)
-    time_start = time.monotonic()
 
     try:
         id_start = db.query_last_flight()
         while COUNTER < STOP_AFTER:
-            LOGGER.info(
+            LOGGER.debug(
                 f"XContest Flight Chunk {id_start} to {id_start + min(STOP_AFTER - 1, NUM_FLIGHTS_ON_PAGE)}"
             )
             this_query = {
@@ -229,17 +233,11 @@ def main(source, site, pace):
             else:
                 break
 
-    except TimeoutException:
-        time_lapsed = time.monotonic() - time_start
-        LOGGER.error(
+    except TimeoutException as err:
+        time_lapsed = time.monotonic() - TIME_START
+        raise RuntimeError(
             f"Timeout after {COUNTER} queries and {int(time_lapsed / 60)} minutes."
-        )
-
-    else:
-        time_lapsed = time.monotonic() - time_start
-        LOGGER.info(
-            f"Successfully retrieved {COUNTER} flight records in {time_lapsed / 60:.1f} minutes."
-        )
+        ) from err
 
     finally:
         browser.quit()
@@ -248,19 +246,21 @@ def main(source, site, pace):
 
 if __name__ == "__main__":
 
-    # Setup logging
     logging.basicConfig(
         # format="%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s",
         format="%(levelname)-4s [%(filename)s:%(lineno)d] %(message)s",
         datefmt="%Y-%m-%d:%H:%M:%S",
         level=logging.INFO,
     )
+    sites = list(CFG["sites"].items())
+    random.shuffle(sites)
+    for site_name, site in sites:
+        LOGGER.info(f"Site: {site_name}")
+        main(site, pace=400)
+        if COUNTER >= STOP_AFTER:
+            break
 
-    source = CFG["sources"]["xcontest"]
-    site_name, site = random.choice(list(CFG["sites"].items()))
-    # site_name, site = "Carì", CFG["sites"]["Carì"]
-    LOGGER.info(f"Extracting data for site {site_name}.")
-
-    # Set pace and start main routine
-    pace = 400  # requests / hour
-    main(source, site, pace)
+    time_lapsed = time.monotonic() - TIME_START
+    LOGGER.info(
+        f"Successfully retrieved {COUNTER} flight records in {time_lapsed / 60:.1f} minutes."
+    )
