@@ -2,6 +2,7 @@ import logging
 import os
 import random
 import time
+from datetime import datetime, timedelta
 
 
 from bs4 import BeautifulSoup
@@ -21,6 +22,7 @@ from startleiter import config as CFG
 LOGGER = logging.getLogger(__name__)
 TIME_START = time.monotonic()
 NUM_FLIGHTS_ON_PAGE = 50
+BUFFER_DAYS = 20
 COUNTER = 0
 STOP_AFTER = 50
 BASE_URL = "https://www.xcontest.org"
@@ -155,7 +157,7 @@ def parse_flights(browser, pace):
     flights = table_body.find_all("tr")
     if len(flights) < NUM_FLIGHTS_ON_PAGE:
         LOGGER.warning(
-            f"Not enough flights to retrieve ({len(flights)} < {NUM_FLIGHTS_ON_PAGE})"
+            f"Not enough new flights available ({len(flights)} < {NUM_FLIGHTS_ON_PAGE}), skipping."
         )
         return None
 
@@ -173,6 +175,19 @@ def parse_flights(browser, pace):
         except (AttributeError, IndexError):
             LOGGER.error(f"Failed to parse flight {n}")
             continue
+
+        flight_datetime_str = (
+            f"{summary[2]}+00:00" if summary[2][-3:] == "UTC" else summary[2]
+        )
+        flight_datetime = datetime.strptime(
+            flight_datetime_str, "%d.%m.%y %H:%MUTC%z"
+        ).replace(tzinfo=None)
+        if datetime.utcnow() - flight_datetime < timedelta(days=BUFFER_DAYS):
+            LOGGER.warning(
+                f"Available flights are less than {BUFFER_DAYS} day old ({flight_datetime.isoformat()}), skipping."
+            )
+            return None
+
         flight_data += summary
 
         # Parse flight details
