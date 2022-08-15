@@ -22,7 +22,7 @@ from startleiter import config as CFG
 LOGGER = logging.getLogger(__name__)
 TIME_START = time.monotonic()
 NUM_FLIGHTS_ON_PAGE = 50
-BUFFER_DAYS = 20
+BUFFER_DAYS = 14
 COUNTER = 0
 STOP_AFTER = 50
 BASE_URL = "https://www.xcontest.org"
@@ -122,6 +122,9 @@ def flight_details(flight, browser):
     loaded = scr.wait_till_loaded(browser, url)
     if not loaded:
         raise WebDriverException
+    authorized = "You are not authorized to see the flight" not in browser.page_source
+    if not authorized:
+        raise WebDriverException("Not authorized to see the flight")
     element = WebDriverWait(
         browser, 20, ignored_exceptions=StaleElementReferenceException
     ).until(EC.element_to_be_clickable((By.LINK_TEXT, "Flight")))
@@ -194,14 +197,17 @@ def parse_flights(browser, pace):
         try:
             details = flight_details(flight, browser)
         except (AttributeError, TimeoutException, WebDriverException) as e:
-            print("F", end="", flush=True)
             details = [None] * 7
             if e.__class__.__name__ == "TimeoutException":
                 consecutive_timeouts += 1
+                print("T", end="", flush=True)
+            else:
+                print("F", end="", flush=True)
         else:
             print(".", end="", flush=True)
             consecutive_timeouts = 0
-        flight_data += details
+        finally:
+            flight_data += details
 
         if consecutive_timeouts > 3:
             raise TimeoutException
@@ -239,7 +245,7 @@ def main(site, pace):
                 "filter[radius]": site["radius"],
             }
             query_url = scr.build_query(SEARCH_URL, DEFAULT_QUERY, this_query)
-            LOGGER.debug(query_url)
+            LOGGER.info(query_url)
             browser.get(query_url)
             flight_chunk = parse_flights(browser, pace)
             if flight_chunk:
