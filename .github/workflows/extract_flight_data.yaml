@@ -3,7 +3,7 @@ name: Extract Flight Data
 on:
   workflow_dispatch:
   schedule:
-    - cron: '9 3 * * *'
+    - cron: '5 8,20 * * *'
 
 defaults:
   run:
