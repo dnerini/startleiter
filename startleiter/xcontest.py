@@ -158,11 +158,6 @@ def parse_flights(browser, pace):
     table = soup.find("table", attrs={"class": "flights"})
     table_body = table.find("tbody")
     flights = table_body.find_all("tr")
-    if len(flights) < NUM_FLIGHTS_ON_PAGE:
-        LOGGER.warning(
-            f"Not enough new flights available ({len(flights)} < {NUM_FLIGHTS_ON_PAGE}), skipping."
-        )
-        return None
 
     t0 = time.monotonic()
     total_sleep = 0
@@ -189,7 +184,7 @@ def parse_flights(browser, pace):
             LOGGER.warning(
                 f"Available flights are less than {BUFFER_DAYS} day old ({flight_datetime.isoformat()}), skipping."
             )
-            return None
+            break
 
         flight_data += summary
 
@@ -250,6 +245,7 @@ def main(site, pace):
             flight_chunk = parse_flights(browser, pace)
             if flight_chunk:
                 db.insert_flights(flight_chunk)
+            if len(flight_chunk) == NUM_FLIGHTS_ON_PAGE:
                 id_start += NUM_FLIGHTS_ON_PAGE
             else:
                 break
