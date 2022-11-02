@@ -17,4 +17,4 @@ dependencies:
   - dask
   - jupyter
   - netcdf4
-  - geckodriver
+  # - geckodriver
