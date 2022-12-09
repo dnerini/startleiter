@@ -26,7 +26,7 @@ def try_wait(maxattempts=6):
                             f"{attempt + 1} attempts. Stopping."
                         )
                         raise err
-                    wait = 2 ** attempt
+                    wait = 2**attempt
                     logger.info(
                         f"@try_wait: {func.__name__} Waiting {wait} seconds ..."
                     )

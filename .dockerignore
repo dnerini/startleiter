@@ -6,3 +6,4 @@ envs/
 notebooks/
 tests/
 .github/
+.git/

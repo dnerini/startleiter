@@ -26,15 +26,17 @@ DEFAULT_QUERY = {
     "MONTH": "01",
     "FROM": "0100",
     "TO": "0100",
-    "STNM": "16080"
+    "STNM": "16080",
 }
 STATION_NAMES = {
-    "LIML": 16080,  # Milano-Linate
+    # "LIML": 16080,  # Milano-Linate, until May 2021
+    "LIML": 16064,  # Novara Cameri, after May 2021
     "LSMP": 6610,  # Payerne
 }
 
 
 # http://weather.uwyo.edu/cgi-bin/sounding?region=europe&TYPE=TEXT%3ASKEWT&YEAR=2009&MONTH=05&FROM=1512&TO=1512&STNM=16080
+
 
 def year_month_from_to(from_dtime, to_dtime=None):
     """
@@ -77,9 +79,13 @@ def sounding_data(body):
     n_cols = len(var_names)
     data = []
     for row in lines[5:-1]:
-        values = [row[(i * 7):(i + 1) * 7] for i in range(n_cols)]
+        values = [row[(i * 7) : (i + 1) * 7] for i in range(n_cols)]
         data.append([float(x) if x.strip() else np.nan for x in values])
-    data_frame = pd.DataFrame(data, columns=var_names).set_index("PRES_hPa").drop("HGHT_m", 1)
+    data_frame = (
+        pd.DataFrame(data, columns=var_names)
+        .set_index("PRES_hPa")
+        .drop("HGHT_m", axis=1)
+    )
     dataset = xr.Dataset.from_dataframe(data_frame)
 
     rename_dict = {}
@@ -101,7 +107,11 @@ def sounding_data(body):
 
 def sounding_indices(body):
     lines = body.text.split("\n")
-    indices = {line.split(":")[0].strip(): line.split(":")[1].strip() for line in lines if line.strip()}
+    indices = {
+        line.split(":")[0].strip(): line.split(":")[1].strip()
+        for line in lines
+        if line.strip()
+    }
     return indices
 
 
@@ -110,15 +120,12 @@ def sounding(soup):
     body = soup.find_all("pre")
     assert len(headings) * 2 == len(body)
     soundings = {}
-    for n,  heading in enumerate(headings):
+    for n, heading in enumerate(headings):
         validtime = heading.text.split(" at ")[1]
         validtime = datetime.strptime(validtime, "%HZ %d %b %Y")
         data = sounding_data(body[n * 2])
         indices = sounding_indices(body[n * 2 + 1])
-        soundings[validtime] = {
-            "data": data,
-            "indices": indices
-        }
+        soundings[validtime] = {"data": data, "indices": indices}
     return soundings
 
 
@@ -155,21 +162,24 @@ if __name__ == "__main__":
     logging.basicConfig(
         # format="%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s",
         format="%(levelname)-4s [%(filename)s:%(lineno)d] %(message)s",
-        datefmt='%Y-%m-%d:%H:%M:%S',
-        level=logging.INFO
+        datefmt="%Y-%m-%d:%H:%M:%S",
+        level=logging.INFO,
     )
 
     # Define source
     source = CFG["sources"]["uwyo"]
-    station = CFG["stations"]["Milano"]
+    station = CFG["stations"]["Cameri"]
 
     # Connect to database
     db = Database(source, station=station)
 
     t0 = time.monotonic()
     total_sleep = 0
-    date_start = db.query_last_sounding() + timedelta(days=1)
+    date_start = db.query_last_sounding(
+        default_start=datetime(2021, 6, 1, 0)
+    ) + timedelta(days=1)
     end_dates = pd.date_range(date_start, datetime.utcnow(), freq="M")
+    print(date_start)
     for n, date in enumerate(end_dates):
         logger.info(f"Retrieving sounding data for {date:%b %Y}")
         soundings = scrape(station["name"], date.replace(day=1), date)

@@ -50,7 +50,7 @@ def wait_till_loaded(browser, url, maxattempts=3):
         return 0
     attempt = 0
     while pageid not in browser.current_url:
-        time.sleep(2 ** attempt)
+        time.sleep(2**attempt)
         attempt += 1
         if attempt > maxattempts:
             return 0
@@ -92,10 +92,13 @@ def pacing(n, ntot, t0, pace, total_sleep):
             total_sleep += spacing
     return total_sleep
 
+
 def cleanup():
     for proc in psutil.process_iter():
-        if (proc.name() in ["geckodriver", "Web Content", "firefox-bin"]
-                and proc.username() == getpass.getuser()):
+        if (
+            proc.name() in ["geckodriver", "Web Content", "firefox-bin"]
+            and proc.username() == getpass.getuser()
+        ):
             try:
                 proc.kill()
             except psutil.NoSuchProcess:

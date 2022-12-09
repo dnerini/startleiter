@@ -19,8 +19,7 @@ def to_wind_components(dataset, inverse=False):
     dataset = dataset.copy()
     if not inverse:
         wind_components = mpcalc.wind_components(
-            dataset["SKNT"].values * units.knots,
-            dataset["DRCT"].values * units.deg
+            dataset["SKNT"].values * units.knots, dataset["DRCT"].values * units.deg
         )
         dataset["U"] = (dataset.coords, wind_components[0].magnitude)
         dataset["V"] = (dataset.coords, wind_components[1].magnitude)
@@ -31,14 +30,18 @@ def to_wind_components(dataset, inverse=False):
         dataset = dataset.drop_vars(("SKNT", "DRCT"))
 
     else:
-        dataset["SKNT"] = (dataset.coords, mpcalc.wind_speed(
-            dataset["U"].values * units.knots,
-            dataset["V"].values * units.knots
-        ).magnitude)
-        dataset["DRCT"] = (dataset.coords, mpcalc.wind_direction(
-            dataset["U"].values * units.knots,
-            dataset["V"].values * units.knots
-        ).magnitude)
+        dataset["SKNT"] = (
+            dataset.coords,
+            mpcalc.wind_speed(
+                dataset["U"].values * units.knots, dataset["V"].values * units.knots
+            ).magnitude,
+        )
+        dataset["DRCT"] = (
+            dataset.coords,
+            mpcalc.wind_direction(
+                dataset["U"].values * units.knots, dataset["V"].values * units.knots
+            ).magnitude,
+        )
         dataset["SKNT"].attrs["units"] = "knot"
         dataset["SKNT"] = dataset["SKNT"].astype("float32")
         dataset["DRCT"].attrs["units"] = "deg"

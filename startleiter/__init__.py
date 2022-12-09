@@ -11,8 +11,13 @@ password = credentials["postgresql"]["password"]
 ip_address = credentials["postgresql"]["ip_address"]
 port = credentials["postgresql"]["port"]
 database = credentials["postgresql"]["database"]
-postgresql_uri = f"postgres+psycopg2://{username}:{password}@{ip_address}:{port}/{database}"
+postgresql_uri = (
+    f"postgresql+psycopg2://{username}:{password}@{ip_address}:{port}/{database}"
+)
 
 config["postgresql"] = {
     "uri": postgresql_uri,
+}
+config["netcdf"] = {
+    "repo": credentials["netcdf"]["repo"],
 }
