@@ -16,6 +16,7 @@ country = "CH"
 longitude = 8.78796
 latitude = 46.1996
 radius = 1000
+elevation = 1600
 
 [sites."Carì"]
 name = "Carì"
@@ -23,6 +24,7 @@ country = "CH"
 longitude = 8.817407
 latitude = 46.504031
 radius = 1000
+elevation = 2000
 
 [sites."Mornera"]
 name = "Mornera"
@@ -30,6 +32,7 @@ country = "CH"
 longitude = 8.98585
 latitude = 46.20573
 radius = 1000
+elevation = 1400
 
 [sites."Monte Generoso"]
 name = "Monte Generoso"
@@ -37,6 +40,7 @@ country = "CH"
 longitude = 9.021417
 latitude = 45.929
 radius = 1000
+elevation = 1600
 
 [sites."Monte Lema"]
 name = "Monte Lema"
@@ -44,6 +48,7 @@ country = "CH"
 longitude = 8.83177
 latitude = 46.03978
 radius = 1000
+elevation = 1600
 
 [sites."Monte Tamaro"]
 name = "Monte Tamaro"
@@ -51,6 +56,7 @@ country = "CH"
 longitude = 8.893895
 latitude = 46.116868
 radius = 1000
+elevation = 1500
 
 [sites."Santa Maria"]
 name = "Santa Maria in Calanca"
@@ -58,6 +64,7 @@ country = "CH"
 longitude = 9.137821
 latitude = 46.266923
 radius = 1000
+elevation = 1200
 
 [stations."Milano"]
 name = "LIML"

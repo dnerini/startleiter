@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timedelta
 from functools import lru_cache
 from io import BytesIO
-from typing import Optional
+from typing import Literal, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,31 +15,71 @@ from starlette.responses import StreamingResponse, RedirectResponse
 from startleiter import config as CFG
 from startleiter import uwyo, rucsoundings
 from startleiter.decorators import try_wait
-from startleiter.explainer import compute_shap, explainable_plot
+from startleiter.explainer import compute_shap
+from startleiter.plots import explainable_plot, outlook_plot
 from startleiter.utils import to_wind_components
 
 LOGGER = logging.getLogger(__name__)
 app = FastAPI()
 
 
-# TODO: do not hardcode
-ALT_BINS = [0, 500, 1000, 1500, 2000]
-DIST_BINS = [0, 50, 100, 150]
-PRESSURE_MIN_hPa = 400
+AVAILABLE_SITES = Literal[
+    "Cimetta",
+    "Carì",
+    "Monte Tamaro",
+    "Monte Generoso",
+    "Mornera",
+    "Monte Lema",
+    "Santa Maria",
+]
 
-CIMETTA_ELEVATION = 1600
-ALT_BINS = [(x + CIMETTA_ELEVATION) // 500 * 500 for x in ALT_BINS]
+ALT_BINS = [0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 2000]
+DIST_BINS = [0, 25, 50, 75, 100, 125, 150, 200]
+PRESSURE_MIN_hPa = 400
 
 STATIONS = CFG["stations"]
 
-MODEL_FLYABILITY = tf.keras.models.load_model("models/flyability_1.h5")
-MODEL_MAX_ALT = tf.keras.models.load_model("models/fly_max_alt_1.h5")
-MODEL_MAX_DIST = tf.keras.models.load_model("models/fly_max_dist_1.h5")
+SITES = CFG["sites"]
+SITE_IDS = {
+    "Cimetta": 1,
+    "Carì": 2,
+    "Monte Tamaro": 3,
+    "Monte Generoso": 4,
+    "Mornera": 5,
+    "Monte Lema": 6,
+    "Santa Maria": 7,
+}
+
+MODEL_FLYABILITY = tf.keras.models.load_model("models/flyability.h5")
+MODEL_MAX_ALT = tf.keras.models.load_model("models/fly_max_alt.h5")
+MODEL_MAX_DIST = tf.keras.models.load_model("models/fly_max_dist.h5")
 
 MOMENTS_FLYABILITY = xr.load_dataset("models/flyability_moments.nc")
-MOMENTS_MAX = xr.load_dataset("models/fly_max_moments.nc")
+MOMENTS_MAX_ALT = xr.load_dataset("models/fly_max_alt_moments.nc")
+MOMENTS_MAX_DIST = xr.load_dataset("models/fly_max_dist_moments.nc")
 
-BACKGROUND = np.load("models/flyability_1_background.npy")
+BACKGROUND = np.load("models/flyability_background.npy")
+
+
+@app.get("/", include_in_schema=False)
+async def basic_view():
+    return RedirectResponse("/docs")
+
+
+def parse_time(time: str, leadtime_days) -> datetime:
+    if time == "latest":
+        time = datetime.utcnow()
+    elif time == "today":
+        time = datetime.utcnow()
+        leadtime_days = None
+    elif time == "tomorrow":
+        time = datetime.utcnow()
+        leadtime_days = 1
+    else:
+        time = pd.to_datetime(time)
+    if time.day > datetime.utcnow().day:
+        raise ValueError("Argument 'time' cannot be in the future!")
+    return time, leadtime_days
 
 
 @try_wait()
@@ -55,7 +95,7 @@ def get_last_sounding_forecast(station, time, leadtime_hrs):
     return data[0], data[1]["data"]
 
 
-def preprocess(ds):
+def extract_features(ds):
     ds = to_wind_components(ds)
     # dew point temperature depression
     ds["DWPD"] = ds["TEMP"] - ds["DWPT"]
@@ -79,19 +119,9 @@ def standardize(da, moments, inverse=False):
         return da * moments.sigma + moments.mu
 
 
-@lru_cache(maxsize=6)
-def pipeline(station: str, time: str, leadtime_days: int) -> xr.Dataset:
-    """Get and preprocess the input data"""
-    if time == "latest":
-        time = datetime.utcnow()
-    elif time == "today":
-        time = datetime.utcnow()
-        leadtime_days = None
-    elif time == "tomorrow":
-        time = datetime.utcnow()
-        leadtime_days = 1
-    else:
-        time = pd.to_datetime(time)
+@lru_cache(maxsize=8)
+def get_sounding(station: str, time: datetime, leadtime_days: int) -> xr.Dataset:
+    """Get the input data"""
     time = time.replace(hour=0, minute=0, second=0, microsecond=0)
     LOGGER.info(f"Time: {time}")
     station = STATIONS[station]
@@ -104,34 +134,66 @@ def pipeline(station: str, time: str, leadtime_days: int) -> xr.Dataset:
         validtime, sounding = get_last_sounding(station["stid"], time)
         sounding.attrs["source"] = f"Radiosounding 00Z {station['long_name']}"
     sounding.attrs["validtime"] = validtime
-    sounding = preprocess(sounding)
+    sounding = extract_features(sounding)
     sounding = sounding.sel(level=slice(1000, PRESSURE_MIN_hPa))
     return sounding
 
 
-@app.get("/", include_in_schema=False)
-async def basic_view():
-    return RedirectResponse("/docs")
+def preprocess(sounding, site, moments):
+    """Preprocess inputs"""
+    inputs_sounding = standardize(sounding, moments)
+    inputs_embedding = xr.DataArray(
+        np.ones((1, 1)) * SITE_IDS[site],
+        dims=("validtime", "variable"),
+    )
+    return xr.concat((inputs_sounding, inputs_embedding), "variable")
 
 
-@app.get("/cimetta")
-async def predict_cimetta(time: str = "latest", leadtime_days: Optional[int] = None):
-
-    # get inputs
-    sounding = pipeline("Cameri", time, leadtime_days)
-    validtime = sounding.attrs["validtime"]
+def predict(site: str, sounding: xr.Dataset):
+    """Predict flyability, max altitude and max distance."""
 
     # flyability
-    inputs = standardize(sounding, MOMENTS_FLYABILITY).values[None, ...]
-    fly_prob = float(MODEL_FLYABILITY.predict(inputs)[0][0])
+    inputs = preprocess(sounding, site, MOMENTS_FLYABILITY)
+    fly_prob = float(MODEL_FLYABILITY.predict(inputs.values[None, ..., 0])[0][0])
 
     # max altitude and distance
-    inputs = standardize(sounding, MOMENTS_MAX).values[None, ...]
-    max_alt = ALT_BINS[int(MODEL_MAX_ALT.predict(inputs)[0].argmax())]
-    max_dist = DIST_BINS[int(MODEL_MAX_DIST.predict(inputs)[0].argmax())]
+    if fly_prob < 0.2:
+        max_alt_gain = 0
+        max_dist = 0
+    else:
+        inputs = preprocess(sounding, site, MOMENTS_MAX_ALT)
+        max_alt_gain = ALT_BINS[
+            int(MODEL_MAX_ALT.predict(inputs.values[None, ..., 0])[0].argmax())
+        ]
+        inputs = preprocess(sounding, site, MOMENTS_MAX_DIST)
+        max_dist = DIST_BINS[
+            int(MODEL_MAX_DIST.predict(inputs.values[None, ..., 0])[0].argmax())
+        ]
+
+    max_alt = (max_alt_gain + SITES[site]["elevation"]) // 100 * 100
+
+    return fly_prob, max_alt, max_dist
+
+
+def explain(site: str, sounding: xr.Dataset):
+    inputs = preprocess(sounding, site, MOMENTS_FLYABILITY)
+    return compute_shap(BACKGROUND, MODEL_FLYABILITY, inputs.values[None, ..., 0])[0]
+
+
+@app.get("/site")
+@app.get("/cimetta")  # deprecated
+async def predict_site(
+    site: AVAILABLE_SITES = "Cimetta",
+    time: str = "latest",
+    leadtime_days: Optional[int] = None,
+):
+    time, leadtime_days = parse_time(time, leadtime_days)
+    sounding = get_sounding("Cameri", time, leadtime_days)
+    validtime = sounding.attrs["validtime"]
+    fly_prob, max_alt, max_dist = predict(site, sounding)
 
     return {
-        "site": "Cimetta",
+        "site": site,
         "validtime": f"{validtime:%Y-%m-%d}",
         "flying_probability": fly_prob,
         "max_altitude_masl": max_alt,
@@ -139,27 +201,58 @@ async def predict_cimetta(time: str = "latest", leadtime_days: Optional[int] = N
     }
 
 
-@app.get("/cimetta_plot")
-async def explain_cimetta(time: str = "latest", leadtime_days: Optional[int] = None):
+@app.get("/site_plot")
+@app.get("/cimetta_plot")  # deprecated
+async def plot_site(
+    site: AVAILABLE_SITES, time: str = "latest", leadtime_days: Optional[int] = None
+):
+    time, leadtime_days = parse_time(time, leadtime_days)
+    sounding = get_sounding("Cameri", time, leadtime_days)
+    fly_prob, max_alt, max_dist = predict(site, sounding)
+    shap_values = explain(site, sounding)
 
-    # get inputs
-    sounding = pipeline("Cameri", time, leadtime_days)
-
-    # flyability
-    inputs = standardize(sounding, MOMENTS_FLYABILITY).values[None, ...]
-    fly_prob = float(MODEL_FLYABILITY.predict(inputs)[0][0])
-    shap_values = compute_shap(BACKGROUND, MODEL_FLYABILITY, inputs)[0]
-
-    # max altitude and distance
-    inputs = standardize(sounding, MOMENTS_MAX).values[None, ...]
-    max_alt = ALT_BINS[int(MODEL_MAX_ALT.predict(inputs)[0].argmax())]
-    max_dist = DIST_BINS[int(MODEL_MAX_DIST.predict(inputs)[0].argmax())]
-
-    # plot  shap
-    fig = explainable_plot(sounding, shap_values, fly_prob, max_alt, max_dist, min_pressure_hPa=PRESSURE_MIN_hPa)
+    fig = explainable_plot(
+        SITES[site],
+        sounding,
+        shap_values,
+        fly_prob,
+        max_alt,
+        max_dist,
+        min_pressure_hPa=PRESSURE_MIN_hPa,
+    )
     image_file = BytesIO()
     plt.savefig(image_file)
     plt.close(fig)
     image_file.seek(0)
+    return StreamingResponse(image_file, media_type="image/png")
 
+
+@app.get("/site_outlook")
+async def outlook_site(site: AVAILABLE_SITES = "Cimetta"):
+    validtimes = []
+    fly_probs = []
+    max_alts = []
+    max_dists = []
+    time = datetime.utcnow()
+    sounding = get_sounding("Cameri", time, None)
+    validtime = sounding.attrs["validtime"]
+    fly_prob, max_alt, max_dist = predict(site, sounding)
+    validtimes.append(validtime)
+    fly_probs.append(fly_prob)
+    max_alts.append(max_alt)
+    max_dists.append(max_dist)
+    for leadtime_days in range(1, 9):
+        print(leadtime_days)
+        sounding = get_sounding("Cameri", time, leadtime_days)
+        validtime = sounding.attrs["validtime"]
+        fly_prob, max_alt, max_dist = predict(site, sounding)
+        validtimes.append(validtime)
+        fly_probs.append(fly_prob)
+        max_alts.append(max_alt)
+        max_dists.append(max_dist)
+    fig = outlook_plot(site, validtimes, fly_probs, max_alts, max_dists)
+    image_file = BytesIO()
+    plt.savefig(image_file)
+    plt.close(fig)
+    image_file.seek(0)
     return StreamingResponse(image_file, media_type="image/png")
