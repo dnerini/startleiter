@@ -145,6 +145,7 @@ def preprocess(sounding, site, moments):
     inputs_embedding = xr.DataArray(
         np.ones((1, 1)) * SITE_IDS[site],
         dims=("validtime", "variable"),
+        coords={"variable": ["ID"]}
     )
     return xr.concat((inputs_sounding, inputs_embedding), "variable")
 
