@@ -22,7 +22,7 @@ from startleiter import config as CFG
 LOGGER = logging.getLogger(__name__)
 TIME_START = time.monotonic()
 NUM_FLIGHTS_ON_PAGE = 50
-BUFFER_DAYS = 14
+BUFFER_DAYS = 7
 COUNTER = 0
 STOP_AFTER = 50
 BASE_URL = "https://www.xcontest.org"
