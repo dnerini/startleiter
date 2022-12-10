@@ -205,7 +205,7 @@ async def predict_site(
 @app.get("/site_plot")
 @app.get("/cimetta_plot")  # deprecated
 async def plot_site(
-    site: AVAILABLE_SITES, time: str = "latest", leadtime_days: Optional[int] = None
+    site: AVAILABLE_SITES = "Cimetta", time: str = "latest", leadtime_days: Optional[int] = None
 ):
     time, leadtime_days = parse_time(time, leadtime_days)
     sounding = get_sounding("Cameri", time, leadtime_days)
