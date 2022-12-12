@@ -33,8 +33,10 @@ AVAILABLE_SITES = Literal[
     "Santa Maria",
 ]
 
+# note: last bin is open, ie > 1600 m and > 150 km
 ALT_BINS = [0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 2000]
-DIST_BINS = [0, 25, 50, 75, 100, 125, 150, 200]
+DIST_BINS = [10, 25, 50, 75, 100, 125, 150, 200]
+
 PRESSURE_MIN_hPa = 400
 
 STATIONS = CFG["stations"]
