@@ -107,7 +107,7 @@ def explainable_plot(
 
     Tmax = T.magnitude.max()
     skew.ax.set_ylim(1000, min_pressure_hPa)
-    skew.ax.set_xlim(Tmax - 28, Tmax + 7)
+    skew.ax.set_xlim(Tmax - 23, Tmax + 12)
 
     # Colorbar
     cmap = plt.get_cmap("bwr")
