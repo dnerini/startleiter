@@ -62,6 +62,8 @@ MOMENTS_MAX_DIST = xr.load_dataset("models/fly_max_dist_moments.nc")
 
 BACKGROUND = np.load("models/flyability_background.npy")
 
+FLY_PROB_THR = 0.1
+
 
 @app.get("/", include_in_schema=False)
 async def basic_view():
@@ -147,7 +149,7 @@ def preprocess(sounding, site, moments):
     inputs_embedding = xr.DataArray(
         np.ones((1, 1)) * SITE_IDS[site],
         dims=("validtime", "variable"),
-        coords={"variable": ["ID"]}
+        coords={"variable": ["ID"]},
     )
     return xr.concat((inputs_sounding, inputs_embedding), "variable")
 
@@ -160,7 +162,7 @@ def predict(site: str, sounding: xr.Dataset):
     fly_prob = float(MODEL_FLYABILITY.predict(inputs.values[None, ..., 0])[0][0])
 
     # max altitude and distance
-    if fly_prob < 0.2:
+    if fly_prob < FLY_PROB_THR:
         max_alt_gain = 0
         max_dist = 0
     else:
@@ -207,7 +209,9 @@ async def predict_site(
 @app.get("/site_plot")
 @app.get("/cimetta_plot")  # deprecated
 async def plot_site(
-    site: AVAILABLE_SITES = "Cimetta", time: str = "latest", leadtime_days: Optional[int] = None
+    site: AVAILABLE_SITES = "Cimetta",
+    time: str = "latest",
+    leadtime_days: Optional[int] = None,
 ):
     time, leadtime_days = parse_time(time, leadtime_days)
     sounding = get_sounding("Cameri", time, leadtime_days)
