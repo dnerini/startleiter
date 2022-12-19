@@ -81,7 +81,7 @@ def parse_time(time: str, leadtime_days) -> datetime:
         leadtime_days = 1
     else:
         time = pd.to_datetime(time)
-    if time.day > datetime.utcnow().day:
+    if time.date() > datetime.utcnow().date():
         raise ValueError("Argument 'time' cannot be in the future!")
     return time, leadtime_days
 
