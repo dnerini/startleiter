@@ -123,7 +123,7 @@ def standardize(da, moments, inverse=False):
         return da * moments.sigma + moments.mu
 
 
-@lru_cache(maxsize=8)
+@lru_cache(maxsize=1)
 def get_sounding(station: str, time: datetime, leadtime_days: int) -> xr.Dataset:
     """Get the input data"""
     time = time.replace(hour=0, minute=0, second=0, microsecond=0)
