@@ -129,7 +129,7 @@ def get_sounding(station: str, time: datetime, leadtime_days: int) -> xr.Dataset
     time = time.replace(hour=0, minute=0, second=0, microsecond=0)
     LOGGER.info(f"Time: {time}")
     station = STATIONS[station]
-    if leadtime_days is not None:
+    if leadtime_days is not None and leadtime_days > 0:
         validtime, sounding = get_last_sounding_forecast(
             station["name"], time, leadtime_hrs=int(leadtime_days) * 24
         )
