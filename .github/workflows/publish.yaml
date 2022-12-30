@@ -31,9 +31,23 @@ jobs:
         with:
           environment-file: envs/eda.yaml
 
+      - name: Create requirements.txt
+        run: |
+          conda install pip
+          pip freeze > requirements.txt
+          conda deactivate
+
+      - name: Install Python and Dependencies
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+      - run: pip install jupyter
+      - run: pip install -r requirements.txt
+
       - name: Debugging
         run: |
-          conda info
+          pip list
           which python
           which python3
 
