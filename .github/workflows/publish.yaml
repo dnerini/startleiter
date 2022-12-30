@@ -24,22 +24,6 @@ jobs:
       - name: Install Python and Dependencies
         uses: actions/setup-python@v4
         with:
-          python-version: 3.9
-
-      - name: Create conda environment
-        uses: mamba-org/provision-with-micromamba@main
-        with:
-          environment-file: envs/eda.yaml
-
-      - name: Create requirements.txt
-        run: |
-          conda install pip
-          pip freeze > requirements.txt
-          conda deactivate
-
-      - name: Install Python and Dependencies
-        uses: actions/setup-python@v4
-        with:
           python-version: '3.9'
           cache: 'pip'
       - run: pip install jupyter
@@ -48,9 +32,7 @@ jobs:
       - name: Debugging
         run: |
           pip list
-          which python
           which python3
-
 
       - name: Render and Publish
         uses: quarto-dev/quarto-actions/publish@v2
