@@ -31,6 +31,13 @@ jobs:
         with:
           environment-file: envs/eda.yaml
 
+      - name: Debugging
+        run: |
+          conda info
+          which python
+          which python3
+
+
       - name: Render and Publish
         uses: quarto-dev/quarto-actions/publish@v2
         with:
