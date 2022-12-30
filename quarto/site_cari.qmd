@@ -1,0 +1,15 @@
+---
+title: Carì Statistics
+subtitle: Data analysis of flight reports for the Carì site.
+date: today
+format:
+  html:
+    code-fold: true
+jupyter: python3
+---
+
+```{python}
+TARGET_SITE_ID = 2
+```
+
+{{< include .compute_statistics.qmd >}}

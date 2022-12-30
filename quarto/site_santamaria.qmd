@@ -1,0 +1,15 @@
+---
+title: Santa Maria Statistics
+subtitle: Data analysis of flight reports for the Santa Maria in Calanca site.
+date: today
+format:
+  html:
+    code-fold: true
+jupyter: python3
+---
+
+```{python}
+TARGET_SITE_ID = 7
+```
+
+{{< include .compute_statistics.qmd >}}

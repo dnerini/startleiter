@@ -1,0 +1,15 @@
+---
+title: Monte Lema Statistics
+subtitle: Data analysis of flight reports for the Monte Lema site.
+date: today
+format:
+  html:
+    code-fold: true
+jupyter: python3
+---
+
+```{python}
+TARGET_SITE_ID = 6
+```
+
+{{< include .compute_statistics.qmd >}}

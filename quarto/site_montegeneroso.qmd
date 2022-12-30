@@ -1,0 +1,15 @@
+---
+title: Monte Generoso Statistics
+subtitle: Data analysis of flight reports for the Monte Generoso site.
+date: today
+format:
+  html:
+    code-fold: true
+jupyter: python3
+---
+
+```{python}
+TARGET_SITE_ID = 4
+```
+
+{{< include .compute_statistics.qmd >}}

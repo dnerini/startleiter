@@ -1,0 +1,18 @@
+name: startleiter-eda
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - jupyterlab
+  - matplotlib
+  - metpy
+  - netcdf4
+  - numpy
+  - pandas
+  - seaborn
+  - sqlalchemy
+  - psycopg2
+  - xarray
+  - toml
+  - dask

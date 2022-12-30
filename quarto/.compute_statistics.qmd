@@ -1,0 +1,147 @@
+
+```{python}
+import os
+from datetime import datetime, timedelta, timezone
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from sqlalchemy import create_engine
+
+db_url = os.environ.get("DATABASE_URL")
+db_url = db_url.replace("postgres://", "postgresql://")
+engine = create_engine(db_url, echo=False)
+
+cols = ["datetime", "site_id", "length_km", "max_altitude_m", "airtime", "glider_cat"]
+df = pd.read_sql("flight", engine, index_col="id", columns=cols)
+df = df[df.site_id==TARGET_SITE_ID].drop("site_id", axis=1)
+
+# maximum altitude: 5000 m
+df = df[np.logical_or(df.max_altitude_m < 5000, df.max_altitude_m.isna())]
+
+# exclude rigid wings
+df = df.drop(df[df.glider_cat == "HGFAI-1 HG"].index)
+df = df.drop(df[df.glider_cat == "RW5FAI-5 RW"].index)
+
+# datetime to date
+df["date"] = df.datetime.dt.date
+
+# convert airtime to float
+df["airtime_hours"] = df["airtime"] / np.timedelta64(1, 's') / 3600
+
+# no. flights in last 24 hours
+df = df.reset_index().sort_values("datetime").set_index("datetime")
+df["occurrences_last_24h"] = 1
+df["occurrences_last_24h"] = df["occurrences_last_24h"].rolling("24H").sum()
+df = df.reset_index().sort_values("id").set_index("id")
+
+# compute the day of the week
+df["dayofweek"] = df.datetime.dt.dayofweek
+mapday = {0: "Mon", 1: "Tue", 2: "Wed", 3: "Thu", 4: "Fri", 5: "Sat", 6: "Sun"}
+df["dayofweek"] = df["dayofweek"].map(mapday)
+
+# compute the month
+df["month"] = df.datetime.dt.month
+mapmonths = {1:'Jan', 2:'Feb', 3:'Mar', 4:'Apr', 5:'May', 6:'Jun', 7:'Jul', 8:'Aug', 9:'Sept', 10:'Oct', 11:'Nov', 12:'Dec'}
+df["month"] = df["month"].map(mapmonths)
+
+# compute the season
+df["season"] = df.datetime.dt.month % 12 // 3 + 1
+mapseas = {1:'DJF', 2:'MAM', 3:'JJA', 4:'SON'}
+df["season"] = df["season"].map(mapseas)
+```
+
+## Past 90 days
+
+```{python}
+#| label: fig-past-90-days
+#| fig-cap: Overview over the past 90 days
+
+sns.set()
+
+dfs = df[df.datetime > datetime.now(timezone.utc) - timedelta(days=90)]
+dfg = dfs.groupby(df.date).datetime.count()
+
+fig, axs = plt.subplots(4, sharex=True, figsize=(7, 10))
+ax = sns.scatterplot(x=dfg.index, y=dfg.values, marker="x", ax=axs[0])
+ax.set(ylabel="No. flights per day")
+ax = sns.scatterplot(x="datetime", y="max_altitude_m", marker="x", data=dfs, ax=axs[1])
+ax = sns.scatterplot(x="datetime", y="length_km", marker="x", data=dfs, ax=axs[2])
+ax = sns.scatterplot(x="datetime", y="airtime_hours", marker="x", data=dfs, ax=axs[3])
+
+plt.xticks(rotation=30)
+plt.tight_layout()
+```
+
+## Annual statistics
+
+```{python}
+#| label: fig-counts-by-year
+#| fig-cap: Total number of flights per year
+
+dfg = df.groupby(df.datetime.dt.year).datetime.count()
+ax = dfg.plot(kind="bar", ylabel="No. of flights []", xlabel="Year")
+```
+
+```{python}
+#| label: fig-altitude-by-year
+#| fig-cap: Maximum flight altitude per year
+
+dfg = df.groupby(df.datetime.dt.year).max_altitude_m
+med = dfg.median()
+err = (np.abs(dfg.quantile([0.1, 0.9]) - med)).unstack()
+ax = med.plot.bar(yerr=err.values.T, ylabel="Max altitude [masl]", xlabel="Year")
+```
+
+```{python}
+#| label: fig-distance-by-year
+#| fig-cap: Maximum flight distance per year
+
+dfg = df.groupby(df.datetime.dt.year).length_km
+med = dfg.median()
+err = (np.abs(dfg.quantile([0.1, 0.9]) - med)).unstack()
+ax = med.plot.bar(yerr=err.values.T, ylabel="Max distance [km]")
+```
+
+```{python}
+#| label: fig-duration-by-year
+#| fig-cap: Maximum flight duration per year
+
+dfg = df.groupby(df.datetime.dt.year).airtime_hours
+med = dfg.median()
+err = (np.abs(dfg.quantile([0.1, 0.9]) - med)).unstack()
+ax = med.plot.bar(yerr=err.values.T, ylabel="Max airtime [h]")
+```
+
+## Monthly statistics
+
+```{python}
+#| label: fig-counts-by-month
+#| fig-cap: Total number of flights per month
+
+dfg = df.groupby(df.datetime.dt.month).datetime.count()
+ax = dfg.plot(kind="bar", ylabel="No. of flights []", xlabel="Month")
+```
+
+```{python}
+#| label: fig-altitude-by-month
+#| fig-cap: Maximum flight altitude per month
+
+ax = sns.catplot(x="month", y="max_altitude_m", order=list(mapmonths.values()), data=df)
+```
+
+```{python}
+#| label: fig-distance-by-month
+#| fig-cap: Maximum flight distance per month
+
+ax = sns.catplot(x="length_km", y="month", order=list(mapmonths.values()), data=df)
+```
+
+```{python}
+#| label: fig-duration-by-month
+#| fig-cap: Maximum flight duration per month
+
+ax = sns.catplot(x="airtime_hours", y="month", order=list(mapmonths.values()), data=df)
+```
+
