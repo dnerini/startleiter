@@ -1,0 +1,94 @@
+[sources."xcontest"]
+name = "xcontest"
+base_url = "https://www.xcontest.org"
+
+[sources."uwyo"]
+name = "uwyo"
+base_url = "http://weather.uwyo.edu"
+
+[sources."rucsoundings"]
+name = "rucsoundings"
+base_url = "https://rucsoundings.noaa.gov"
+
+[sites."Cimetta"]
+name = "Cimetta"
+country = "CH"
+longitude = 8.78796
+latitude = 46.1996
+radius = 1000
+elevation = 1600
+
+[sites."Carì"]
+name = "Carì"
+country = "CH"
+longitude = 8.817407
+latitude = 46.504031
+radius = 1000
+elevation = 2000
+
+[sites."Mornera"]
+name = "Mornera"
+country = "CH"
+longitude = 8.98585
+latitude = 46.20573
+radius = 1000
+elevation = 1400
+
+[sites."Monte Generoso"]
+name = "Monte Generoso"
+country = "CH"
+longitude = 9.021417
+latitude = 45.929
+radius = 1000
+elevation = 1600
+
+[sites."Monte Lema"]
+name = "Monte Lema"
+country = "CH"
+longitude = 8.83177
+latitude = 46.03978
+radius = 1000
+elevation = 1600
+
+[sites."Monte Tamaro"]
+name = "Monte Tamaro"
+country = "CH"
+longitude = 8.893895
+latitude = 46.116868
+radius = 1000
+elevation = 1500
+
+[sites."Santa Maria"]
+name = "Santa Maria in Calanca"
+country = "CH"
+longitude = 9.137821
+latitude = 46.266923
+radius = 1000
+elevation = 1200
+
+[stations."Milano"]
+name = "LIML"
+long_name = "Milano Linate"
+stid = 16080
+country = "Italy"
+latitude = 45.43
+longitude = 9.28
+elevation = 103.0
+
+[stations."Cameri"]
+name = "LIML"
+long_name = "Novara Cameri"
+stid = 16064
+country = "Italy"
+latitude = 45.53  
+longitude = 8.67
+elevation = 178.0
+
+[stations."Payerne"]
+name = "LSMP"
+long_name = "Payerne"
+stid = 6610
+country = "Switzerland"
+latitude = 46.81
+longitude = 6.95
+elevation = 491.0

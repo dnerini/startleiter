@@ -1,0 +1,21 @@
+name: startleiter-scrape
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - beautifulsoup4
+  - psycopg2
+  - metpy
+  - numpy
+  - pandas
+  - requests
+  - selenium
+  - sqlalchemy
+  - toml
+  - xarray
+  - dask
+  - jupyter
+  - netcdf4
+  - firefox
+  # - geckodriver

@@ -1,0 +1,46 @@
+name: Extract Flight Data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '5 22 * * *'
+
+defaults:
+  run:
+    shell: bash -l {0}
+jobs:
+  extraction:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Create conda environment
+        uses: mamba-org/provision-with-micromamba@main
+        with:
+          environment-file: envs/scrape.yaml
+
+      - name: Download WebDriver
+        run: |
+          wget https://github.com/mozilla/geckodriver/releases/download/v0.32.0/geckodriver-v0.32.0-linux64.tar.gz
+          tar -xvzf geckodriver-v0.32.0-linux64.tar.gz
+          chmod +x geckodriver
+          mv geckodriver /usr/local/bin/
+
+      - name: Install startleiter
+        working-directory: ${{github.workspace}}
+        run: pip install -e .
+
+      - name: Run data extraction
+        env:
+          XCONTEST_USERNAME: ${{ secrets.XCONTEST_USERNAME }}
+          XCONTEST_PASSWORD: ${{ secrets.XCONTEST_PASSWORD }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # TODO: do not hardcode DATABASE_URL, use instead:
+          # DATABASE_URL=$(heroku config:get DATABASE_URL -a startleiter) 
+        working-directory: ${{github.workspace}}
+        run: python startleiter/xcontest.py
