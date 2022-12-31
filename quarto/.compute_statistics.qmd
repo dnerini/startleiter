@@ -20,6 +20,9 @@ df = df[df.site_id==TARGET_SITE_ID].drop("site_id", axis=1)
 # maximum altitude: 5000 m
 df = df[np.logical_or(df.max_altitude_m < 5000, df.max_altitude_m.isna())]
 
+# minimum altitude: 1000 m
+df = df[np.logical_or(df.max_altitude_m > 1000, df.max_altitude_m.isna())]
+
 # exclude rigid wings
 df = df.drop(df[df.glider_cat == "HGFAI-1 HG"].index)
 df = df.drop(df[df.glider_cat == "RW5FAI-5 RW"].index)
@@ -52,7 +55,7 @@ mapseas = {1:'DJF', 2:'MAM', 3:'JJA', 4:'SON'}
 df["season"] = df["season"].map(mapseas)
 ```
 
-## Past 90 days
+## Last 90 days
 
 ```{python}
 #| label: fig-past-90-days
@@ -60,15 +63,34 @@ df["season"] = df["season"].map(mapseas)
 
 sns.set()
 
+# compute reference values based on the bast 5 years
+ts = df.set_index("datetime").sort_index()
+offset_5_years = f"{5 * 365}D"
+clim = ts[["max_altitude_m", "length_km", "airtime_hours"]].resample("1D").mean()
+clim = clim.groupby(clim.index.isocalendar().week)
+clim = clim.rolling(window=offset_5_years, center=False).mean().reset_index(0, drop=True)
+clim = clim.sort_index().rolling("15D", center=True).mean()
+
+clim = clim[clim.index > datetime.now(timezone.utc) - timedelta(days=90)]
 dfs = df[df.datetime > datetime.now(timezone.utc) - timedelta(days=90)]
 dfg = dfs.groupby(df.date).datetime.count()
 
 fig, axs = plt.subplots(4, sharex=True, figsize=(7, 10))
-ax = sns.scatterplot(x=dfg.index, y=dfg.values, marker="x", ax=axs[0])
-ax.set(ylabel="No. flights per day")
-ax = sns.scatterplot(x="datetime", y="max_altitude_m", marker="x", data=dfs, ax=axs[1])
-ax = sns.scatterplot(x="datetime", y="length_km", marker="x", data=dfs, ax=axs[2])
-ax = sns.scatterplot(x="datetime", y="airtime_hours", marker="x", data=dfs, ax=axs[3])
+ax0 = sns.scatterplot(x=dfg.index, y=dfg.values, marker="x", ax=axs[0])
+ax1 = sns.scatterplot(x="datetime", y="max_altitude_m", marker="x", data=dfs, ax=axs[1])
+ax2 = sns.scatterplot(x="datetime", y="length_km", marker="x", data=dfs, ax=axs[2])
+ax3 = sns.scatterplot(x="datetime", y="airtime_hours", marker="x", data=dfs, ax=axs[3])
+
+# add reference lines
+ax1.plot(clim.index, clim.max_altitude_m, color="tab:red")
+ax2.plot(clim.index, clim.length_km, color="tab:red")
+ax3.plot(clim.index, clim.airtime_hours, color="tab:red")
+
+ax0.set(ylabel="No. flights per day")
+ax1.set(ylabel="Max altitude [m]")
+ax2.set(ylabel="Distance [km]")
+ax3.set(ylabel="Airtime [h]")
+
 
 plt.xticks(rotation=30)
 plt.tight_layout()
