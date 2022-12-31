@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2022-12-30">
+<meta name="dcterms.date" content="2022-12-31">
 
 <title>Startleiter - Cimetta Statistics</title>
 <style>
@@ -166,7 +166,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#past-90-days" id="toc-past-90-days" class="nav-link active" data-scroll-target="#past-90-days">Past 90 days</a></li>
+  <li><a href="#last-90-days" id="toc-last-90-days" class="nav-link active" data-scroll-target="#last-90-days">Last 90 days</a></li>
   <li><a href="#annual-statistics" id="toc-annual-statistics" class="nav-link" data-scroll-target="#annual-statistics">Annual statistics</a></li>
   <li><a href="#monthly-statistics" id="toc-monthly-statistics" class="nav-link" data-scroll-target="#monthly-statistics">Monthly statistics</a></li>
   </ul>
@@ -189,7 +189,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">December 30, 2022</p>
+      <p class="date">December 31, 2022</p>
     </div>
   </div>
   
@@ -228,62 +228,84 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"># maximum altitude: 5000 m</span></span>
 <span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df[np.logical_or(df.max_altitude_m <span class="op">&lt;</span> <span class="dv">5000</span>, df.max_altitude_m.isna())]</span>
 <span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co"># exclude rigid wings</span></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.drop(df[df.glider_cat <span class="op">==</span> <span class="st">"HGFAI-1 HG"</span>].index)</span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.drop(df[df.glider_cat <span class="op">==</span> <span class="st">"RW5FAI-5 RW"</span>].index)</span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co"># datetime to date</span></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"date"</span>] <span class="op">=</span> df.datetime.dt.date</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co"># minimum altitude: 1000 m</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df[np.logical_or(df.max_altitude_m <span class="op">&gt;</span> <span class="dv">1000</span>, df.max_altitude_m.isna())]</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co"># exclude rigid wings</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.drop(df[df.glider_cat <span class="op">==</span> <span class="st">"HGFAI-1 HG"</span>].index)</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.drop(df[df.glider_cat <span class="op">==</span> <span class="st">"RW5FAI-5 RW"</span>].index)</span>
 <span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co"># convert airtime to float</span></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"airtime_hours"</span>] <span class="op">=</span> df[<span class="st">"airtime"</span>] <span class="op">/</span> np.timedelta64(<span class="dv">1</span>, <span class="st">'s'</span>) <span class="op">/</span> <span class="dv">3600</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co"># datetime to date</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"date"</span>] <span class="op">=</span> df.datetime.dt.date</span>
 <span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="co"># no. flights in last 24 hours</span></span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.reset_index().sort_values(<span class="st">"datetime"</span>).set_index(<span class="st">"datetime"</span>)</span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"occurrences_last_24h"</span>] <span class="op">=</span> <span class="dv">1</span></span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"occurrences_last_24h"</span>] <span class="op">=</span> df[<span class="st">"occurrences_last_24h"</span>].rolling(<span class="st">"24H"</span>).<span class="bu">sum</span>()</span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.reset_index().sort_values(<span class="st">"id"</span>).set_index(<span class="st">"id"</span>)</span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="co"># compute the day of the week</span></span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"dayofweek"</span>] <span class="op">=</span> df.datetime.dt.dayofweek</span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>mapday <span class="op">=</span> {<span class="dv">0</span>: <span class="st">"Mon"</span>, <span class="dv">1</span>: <span class="st">"Tue"</span>, <span class="dv">2</span>: <span class="st">"Wed"</span>, <span class="dv">3</span>: <span class="st">"Thu"</span>, <span class="dv">4</span>: <span class="st">"Fri"</span>, <span class="dv">5</span>: <span class="st">"Sat"</span>, <span class="dv">6</span>: <span class="st">"Sun"</span>}</span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"dayofweek"</span>] <span class="op">=</span> df[<span class="st">"dayofweek"</span>].<span class="bu">map</span>(mapday)</span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="co"># compute the month</span></span>
-<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"month"</span>] <span class="op">=</span> df.datetime.dt.month</span>
-<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>mapmonths <span class="op">=</span> {<span class="dv">1</span>:<span class="st">'Jan'</span>, <span class="dv">2</span>:<span class="st">'Feb'</span>, <span class="dv">3</span>:<span class="st">'Mar'</span>, <span class="dv">4</span>:<span class="st">'Apr'</span>, <span class="dv">5</span>:<span class="st">'May'</span>, <span class="dv">6</span>:<span class="st">'Jun'</span>, <span class="dv">7</span>:<span class="st">'Jul'</span>, <span class="dv">8</span>:<span class="st">'Aug'</span>, <span class="dv">9</span>:<span class="st">'Sept'</span>, <span class="dv">10</span>:<span class="st">'Oct'</span>, <span class="dv">11</span>:<span class="st">'Nov'</span>, <span class="dv">12</span>:<span class="st">'Dec'</span>}</span>
-<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"month"</span>] <span class="op">=</span> df[<span class="st">"month"</span>].<span class="bu">map</span>(mapmonths)</span>
-<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="co"># compute the season</span></span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"season"</span>] <span class="op">=</span> df.datetime.dt.month <span class="op">%</span> <span class="dv">12</span> <span class="op">//</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">1</span></span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>mapseas <span class="op">=</span> {<span class="dv">1</span>:<span class="st">'DJF'</span>, <span class="dv">2</span>:<span class="st">'MAM'</span>, <span class="dv">3</span>:<span class="st">'JJA'</span>, <span class="dv">4</span>:<span class="st">'SON'</span>}</span>
-<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"season"</span>] <span class="op">=</span> df[<span class="st">"season"</span>].<span class="bu">map</span>(mapseas)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="co"># convert airtime to float</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"airtime_hours"</span>] <span class="op">=</span> df[<span class="st">"airtime"</span>] <span class="op">/</span> np.timedelta64(<span class="dv">1</span>, <span class="st">'s'</span>) <span class="op">/</span> <span class="dv">3600</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="co"># no. flights in last 24 hours</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.reset_index().sort_values(<span class="st">"datetime"</span>).set_index(<span class="st">"datetime"</span>)</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"occurrences_last_24h"</span>] <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"occurrences_last_24h"</span>] <span class="op">=</span> df[<span class="st">"occurrences_last_24h"</span>].rolling(<span class="st">"24H"</span>).<span class="bu">sum</span>()</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.reset_index().sort_values(<span class="st">"id"</span>).set_index(<span class="st">"id"</span>)</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="co"># compute the day of the week</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"dayofweek"</span>] <span class="op">=</span> df.datetime.dt.dayofweek</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>mapday <span class="op">=</span> {<span class="dv">0</span>: <span class="st">"Mon"</span>, <span class="dv">1</span>: <span class="st">"Tue"</span>, <span class="dv">2</span>: <span class="st">"Wed"</span>, <span class="dv">3</span>: <span class="st">"Thu"</span>, <span class="dv">4</span>: <span class="st">"Fri"</span>, <span class="dv">5</span>: <span class="st">"Sat"</span>, <span class="dv">6</span>: <span class="st">"Sun"</span>}</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"dayofweek"</span>] <span class="op">=</span> df[<span class="st">"dayofweek"</span>].<span class="bu">map</span>(mapday)</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="co"># compute the month</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"month"</span>] <span class="op">=</span> df.datetime.dt.month</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>mapmonths <span class="op">=</span> {<span class="dv">1</span>:<span class="st">'Jan'</span>, <span class="dv">2</span>:<span class="st">'Feb'</span>, <span class="dv">3</span>:<span class="st">'Mar'</span>, <span class="dv">4</span>:<span class="st">'Apr'</span>, <span class="dv">5</span>:<span class="st">'May'</span>, <span class="dv">6</span>:<span class="st">'Jun'</span>, <span class="dv">7</span>:<span class="st">'Jul'</span>, <span class="dv">8</span>:<span class="st">'Aug'</span>, <span class="dv">9</span>:<span class="st">'Sept'</span>, <span class="dv">10</span>:<span class="st">'Oct'</span>, <span class="dv">11</span>:<span class="st">'Nov'</span>, <span class="dv">12</span>:<span class="st">'Dec'</span>}</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"month"</span>] <span class="op">=</span> df[<span class="st">"month"</span>].<span class="bu">map</span>(mapmonths)</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a><span class="co"># compute the season</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"season"</span>] <span class="op">=</span> df.datetime.dt.month <span class="op">%</span> <span class="dv">12</span> <span class="op">//</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>mapseas <span class="op">=</span> {<span class="dv">1</span>:<span class="st">'DJF'</span>, <span class="dv">2</span>:<span class="st">'MAM'</span>, <span class="dv">3</span>:<span class="st">'JJA'</span>, <span class="dv">4</span>:<span class="st">'SON'</span>}</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"season"</span>] <span class="op">=</span> df[<span class="st">"season"</span>].<span class="bu">map</span>(mapseas)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<section id="past-90-days" class="level2">
-<h2 class="anchored" data-anchor-id="past-90-days">Past 90 days</h2>
+<section id="last-90-days" class="level2">
+<h2 class="anchored" data-anchor-id="last-90-days">Last 90 days</h2>
 <div class="cell" data-execution_count="3">
 <details>
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>sns.<span class="bu">set</span>()</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>dfs <span class="op">=</span> df[df.datetime <span class="op">&gt;</span> datetime.now(timezone.utc) <span class="op">-</span> timedelta(days<span class="op">=</span><span class="dv">90</span>)]</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>dfg <span class="op">=</span> dfs.groupby(df.date).datetime.count()</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">4</span>, sharex<span class="op">=</span><span class="va">True</span>, figsize<span class="op">=</span>(<span class="dv">7</span>, <span class="dv">10</span>))</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> sns.scatterplot(x<span class="op">=</span>dfg.index, y<span class="op">=</span>dfg.values, marker<span class="op">=</span><span class="st">"x"</span>, ax<span class="op">=</span>axs[<span class="dv">0</span>])</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(ylabel<span class="op">=</span><span class="st">"No. flights per day"</span>)</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> sns.scatterplot(x<span class="op">=</span><span class="st">"datetime"</span>, y<span class="op">=</span><span class="st">"max_altitude_m"</span>, marker<span class="op">=</span><span class="st">"x"</span>, data<span class="op">=</span>dfs, ax<span class="op">=</span>axs[<span class="dv">1</span>])</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> sns.scatterplot(x<span class="op">=</span><span class="st">"datetime"</span>, y<span class="op">=</span><span class="st">"length_km"</span>, marker<span class="op">=</span><span class="st">"x"</span>, data<span class="op">=</span>dfs, ax<span class="op">=</span>axs[<span class="dv">2</span>])</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> sns.scatterplot(x<span class="op">=</span><span class="st">"datetime"</span>, y<span class="op">=</span><span class="st">"airtime_hours"</span>, marker<span class="op">=</span><span class="st">"x"</span>, data<span class="op">=</span>dfs, ax<span class="op">=</span>axs[<span class="dv">3</span>])</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>plt.xticks(rotation<span class="op">=</span><span class="dv">30</span>)</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># compute reference values based on the bast 5 years</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>ts <span class="op">=</span> df.set_index(<span class="st">"datetime"</span>).sort_index()</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>offset_5_years <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span><span class="dv">5</span> <span class="op">*</span> <span class="dv">365</span><span class="sc">}</span><span class="ss">D"</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>clim <span class="op">=</span> ts[[<span class="st">"max_altitude_m"</span>, <span class="st">"length_km"</span>, <span class="st">"airtime_hours"</span>]].resample(<span class="st">"1D"</span>).mean()</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>clim <span class="op">=</span> clim.groupby(clim.index.isocalendar().week)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>clim <span class="op">=</span> clim.rolling(window<span class="op">=</span>offset_5_years, center<span class="op">=</span><span class="va">False</span>).mean().reset_index(<span class="dv">0</span>, drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>clim <span class="op">=</span> clim.sort_index().rolling(<span class="st">"15D"</span>, center<span class="op">=</span><span class="va">True</span>).mean()</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>clim <span class="op">=</span> clim[clim.index <span class="op">&gt;</span> datetime.now(timezone.utc) <span class="op">-</span> timedelta(days<span class="op">=</span><span class="dv">90</span>)]</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>dfs <span class="op">=</span> df[df.datetime <span class="op">&gt;</span> datetime.now(timezone.utc) <span class="op">-</span> timedelta(days<span class="op">=</span><span class="dv">90</span>)]</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>dfg <span class="op">=</span> dfs.groupby(df.date).datetime.count()</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">4</span>, sharex<span class="op">=</span><span class="va">True</span>, figsize<span class="op">=</span>(<span class="dv">7</span>, <span class="dv">10</span>))</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>ax0 <span class="op">=</span> sns.scatterplot(x<span class="op">=</span>dfg.index, y<span class="op">=</span>dfg.values, marker<span class="op">=</span><span class="st">"x"</span>, ax<span class="op">=</span>axs[<span class="dv">0</span>])</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>ax1 <span class="op">=</span> sns.scatterplot(x<span class="op">=</span><span class="st">"datetime"</span>, y<span class="op">=</span><span class="st">"max_altitude_m"</span>, marker<span class="op">=</span><span class="st">"x"</span>, data<span class="op">=</span>dfs, ax<span class="op">=</span>axs[<span class="dv">1</span>])</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>ax2 <span class="op">=</span> sns.scatterplot(x<span class="op">=</span><span class="st">"datetime"</span>, y<span class="op">=</span><span class="st">"length_km"</span>, marker<span class="op">=</span><span class="st">"x"</span>, data<span class="op">=</span>dfs, ax<span class="op">=</span>axs[<span class="dv">2</span>])</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>ax3 <span class="op">=</span> sns.scatterplot(x<span class="op">=</span><span class="st">"datetime"</span>, y<span class="op">=</span><span class="st">"airtime_hours"</span>, marker<span class="op">=</span><span class="st">"x"</span>, data<span class="op">=</span>dfs, ax<span class="op">=</span>axs[<span class="dv">3</span>])</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="co"># add reference lines</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>ax1.plot(clim.index, clim.max_altitude_m, color<span class="op">=</span><span class="st">"tab:red"</span>)</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>ax2.plot(clim.index, clim.length_km, color<span class="op">=</span><span class="st">"tab:red"</span>)</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>ax3.plot(clim.index, clim.airtime_hours, color<span class="op">=</span><span class="st">"tab:red"</span>)</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>ax0.<span class="bu">set</span>(ylabel<span class="op">=</span><span class="st">"No. flights per day"</span>)</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>ax1.<span class="bu">set</span>(ylabel<span class="op">=</span><span class="st">"Max altitude [m]"</span>)</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>ax2.<span class="bu">set</span>(ylabel<span class="op">=</span><span class="st">"Distance [km]"</span>)</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>ax3.<span class="bu">set</span>(ylabel<span class="op">=</span><span class="st">"Airtime [h]"</span>)</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>plt.xticks(rotation<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
 <div id="fig-past-90-days" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="site_cimetta_files/figure-html/fig-past-90-days-output-1.png" width="656" height="944" class="figure-img"></p>
+<p><img src="site_cimetta_files/figure-html/fig-past-90-days-output-1.png" width="657" height="944" class="figure-img"></p>
 <p></p><figcaption class="figure-caption">Figure&nbsp;1: Overview over the past 90 days</figcaption><p></p>
 </figure>
 </div>

@@ -7,11 +7,11 @@
     "text": "Code\nTARGET_SITE_ID = 3"
   },
   {
-    "objectID": "site_montetamaro.html#past-90-days",
-    "href": "site_montetamaro.html#past-90-days",
+    "objectID": "site_montetamaro.html#last-90-days",
+    "href": "site_montetamaro.html#last-90-days",
     "title": "Monte Tamaro Statistics",
-    "section": "Past 90 days",
-    "text": "Past 90 days\n\n\nCode\nsns.set()\n\ndfs = df[df.datetime > datetime.now(timezone.utc) - timedelta(days=90)]\ndfg = dfs.groupby(df.date).datetime.count()\n\nfig, axs = plt.subplots(4, sharex=True, figsize=(7, 10))\nax = sns.scatterplot(x=dfg.index, y=dfg.values, marker=\"x\", ax=axs[0])\nax.set(ylabel=\"No. flights per day\")\nax = sns.scatterplot(x=\"datetime\", y=\"max_altitude_m\", marker=\"x\", data=dfs, ax=axs[1])\nax = sns.scatterplot(x=\"datetime\", y=\"length_km\", marker=\"x\", data=dfs, ax=axs[2])\nax = sns.scatterplot(x=\"datetime\", y=\"airtime_hours\", marker=\"x\", data=dfs, ax=axs[3])\n\nplt.xticks(rotation=30)\nplt.tight_layout()\n\n\n\n\n\nFigure 1: Overview over the past 90 days"
+    "section": "Last 90 days",
+    "text": "Last 90 days\n\n\nCode\nsns.set()\n\n# compute reference values based on the bast 5 years\nts = df.set_index(\"datetime\").sort_index()\noffset_5_years = f\"{5 * 365}D\"\nclim = ts[[\"max_altitude_m\", \"length_km\", \"airtime_hours\"]].resample(\"1D\").mean()\nclim = clim.groupby(clim.index.isocalendar().week)\nclim = clim.rolling(window=offset_5_years, center=False).mean().reset_index(0, drop=True)\nclim = clim.sort_index().rolling(\"15D\", center=True).mean()\n\nclim = clim[clim.index > datetime.now(timezone.utc) - timedelta(days=90)]\ndfs = df[df.datetime > datetime.now(timezone.utc) - timedelta(days=90)]\ndfg = dfs.groupby(df.date).datetime.count()\n\nfig, axs = plt.subplots(4, sharex=True, figsize=(7, 10))\nax0 = sns.scatterplot(x=dfg.index, y=dfg.values, marker=\"x\", ax=axs[0])\nax1 = sns.scatterplot(x=\"datetime\", y=\"max_altitude_m\", marker=\"x\", data=dfs, ax=axs[1])\nax2 = sns.scatterplot(x=\"datetime\", y=\"length_km\", marker=\"x\", data=dfs, ax=axs[2])\nax3 = sns.scatterplot(x=\"datetime\", y=\"airtime_hours\", marker=\"x\", data=dfs, ax=axs[3])\n\n# add reference lines\nax1.plot(clim.index, clim.max_altitude_m, color=\"tab:red\")\nax2.plot(clim.index, clim.length_km, color=\"tab:red\")\nax3.plot(clim.index, clim.airtime_hours, color=\"tab:red\")\n\nax0.set(ylabel=\"No. flights per day\")\nax1.set(ylabel=\"Max altitude [m]\")\nax2.set(ylabel=\"Distance [km]\")\nax3.set(ylabel=\"Airtime [h]\")\n\n\nplt.xticks(rotation=30)\nplt.tight_layout()\n\n\n\n\n\nFigure 1: Overview over the past 90 days"
   },
   {
     "objectID": "site_montetamaro.html#annual-statistics",
@@ -35,11 +35,11 @@
     "text": "Code\nTARGET_SITE_ID = 1"
   },
   {
-    "objectID": "site_cimetta.html#past-90-days",
-    "href": "site_cimetta.html#past-90-days",
+    "objectID": "site_cimetta.html#last-90-days",
+    "href": "site_cimetta.html#last-90-days",
     "title": "Cimetta Statistics",
-    "section": "Past 90 days",
-    "text": "Past 90 days\n\n\nCode\nsns.set()\n\ndfs = df[df.datetime > datetime.now(timezone.utc) - timedelta(days=90)]\ndfg = dfs.groupby(df.date).datetime.count()\n\nfig, axs = plt.subplots(4, sharex=True, figsize=(7, 10))\nax = sns.scatterplot(x=dfg.index, y=dfg.values, marker=\"x\", ax=axs[0])\nax.set(ylabel=\"No. flights per day\")\nax = sns.scatterplot(x=\"datetime\", y=\"max_altitude_m\", marker=\"x\", data=dfs, ax=axs[1])\nax = sns.scatterplot(x=\"datetime\", y=\"length_km\", marker=\"x\", data=dfs, ax=axs[2])\nax = sns.scatterplot(x=\"datetime\", y=\"airtime_hours\", marker=\"x\", data=dfs, ax=axs[3])\n\nplt.xticks(rotation=30)\nplt.tight_layout()\n\n\n\n\n\nFigure 1: Overview over the past 90 days"
+    "section": "Last 90 days",
+    "text": "Last 90 days\n\n\nCode\nsns.set()\n\n# compute reference values based on the bast 5 years\nts = df.set_index(\"datetime\").sort_index()\noffset_5_years = f\"{5 * 365}D\"\nclim = ts[[\"max_altitude_m\", \"length_km\", \"airtime_hours\"]].resample(\"1D\").mean()\nclim = clim.groupby(clim.index.isocalendar().week)\nclim = clim.rolling(window=offset_5_years, center=False).mean().reset_index(0, drop=True)\nclim = clim.sort_index().rolling(\"15D\", center=True).mean()\n\nclim = clim[clim.index > datetime.now(timezone.utc) - timedelta(days=90)]\ndfs = df[df.datetime > datetime.now(timezone.utc) - timedelta(days=90)]\ndfg = dfs.groupby(df.date).datetime.count()\n\nfig, axs = plt.subplots(4, sharex=True, figsize=(7, 10))\nax0 = sns.scatterplot(x=dfg.index, y=dfg.values, marker=\"x\", ax=axs[0])\nax1 = sns.scatterplot(x=\"datetime\", y=\"max_altitude_m\", marker=\"x\", data=dfs, ax=axs[1])\nax2 = sns.scatterplot(x=\"datetime\", y=\"length_km\", marker=\"x\", data=dfs, ax=axs[2])\nax3 = sns.scatterplot(x=\"datetime\", y=\"airtime_hours\", marker=\"x\", data=dfs, ax=axs[3])\n\n# add reference lines\nax1.plot(clim.index, clim.max_altitude_m, color=\"tab:red\")\nax2.plot(clim.index, clim.length_km, color=\"tab:red\")\nax3.plot(clim.index, clim.airtime_hours, color=\"tab:red\")\n\nax0.set(ylabel=\"No. flights per day\")\nax1.set(ylabel=\"Max altitude [m]\")\nax2.set(ylabel=\"Distance [km]\")\nax3.set(ylabel=\"Airtime [h]\")\n\n\nplt.xticks(rotation=30)\nplt.tight_layout()\n\n\n\n\n\nFigure 1: Overview over the past 90 days"
   },
   {
     "objectID": "site_cimetta.html#annual-statistics",
@@ -63,11 +63,11 @@
     "text": "Code\nTARGET_SITE_ID = 7"
   },
   {
-    "objectID": "site_santamaria.html#past-90-days",
-    "href": "site_santamaria.html#past-90-days",
+    "objectID": "site_santamaria.html#last-90-days",
+    "href": "site_santamaria.html#last-90-days",
     "title": "Santa Maria Statistics",
-    "section": "Past 90 days",
-    "text": "Past 90 days\n\n\nCode\nsns.set()\n\ndfs = df[df.datetime > datetime.now(timezone.utc) - timedelta(days=90)]\ndfg = dfs.groupby(df.date).datetime.count()\n\nfig, axs = plt.subplots(4, sharex=True, figsize=(7, 10))\nax = sns.scatterplot(x=dfg.index, y=dfg.values, marker=\"x\", ax=axs[0])\nax.set(ylabel=\"No. flights per day\")\nax = sns.scatterplot(x=\"datetime\", y=\"max_altitude_m\", marker=\"x\", data=dfs, ax=axs[1])\nax = sns.scatterplot(x=\"datetime\", y=\"length_km\", marker=\"x\", data=dfs, ax=axs[2])\nax = sns.scatterplot(x=\"datetime\", y=\"airtime_hours\", marker=\"x\", data=dfs, ax=axs[3])\n\nplt.xticks(rotation=30)\nplt.tight_layout()\n\n\n\n\n\nFigure 1: Overview over the past 90 days"
+    "section": "Last 90 days",
+    "text": "Last 90 days\n\n\nCode\nsns.set()\n\n# compute reference values based on the bast 5 years\nts = df.set_index(\"datetime\").sort_index()\noffset_5_years = f\"{5 * 365}D\"\nclim = ts[[\"max_altitude_m\", \"length_km\", \"airtime_hours\"]].resample(\"1D\").mean()\nclim = clim.groupby(clim.index.isocalendar().week)\nclim = clim.rolling(window=offset_5_years, center=False).mean().reset_index(0, drop=True)\nclim = clim.sort_index().rolling(\"15D\", center=True).mean()\n\nclim = clim[clim.index > datetime.now(timezone.utc) - timedelta(days=90)]\ndfs = df[df.datetime > datetime.now(timezone.utc) - timedelta(days=90)]\ndfg = dfs.groupby(df.date).datetime.count()\n\nfig, axs = plt.subplots(4, sharex=True, figsize=(7, 10))\nax0 = sns.scatterplot(x=dfg.index, y=dfg.values, marker=\"x\", ax=axs[0])\nax1 = sns.scatterplot(x=\"datetime\", y=\"max_altitude_m\", marker=\"x\", data=dfs, ax=axs[1])\nax2 = sns.scatterplot(x=\"datetime\", y=\"length_km\", marker=\"x\", data=dfs, ax=axs[2])\nax3 = sns.scatterplot(x=\"datetime\", y=\"airtime_hours\", marker=\"x\", data=dfs, ax=axs[3])\n\n# add reference lines\nax1.plot(clim.index, clim.max_altitude_m, color=\"tab:red\")\nax2.plot(clim.index, clim.length_km, color=\"tab:red\")\nax3.plot(clim.index, clim.airtime_hours, color=\"tab:red\")\n\nax0.set(ylabel=\"No. flights per day\")\nax1.set(ylabel=\"Max altitude [m]\")\nax2.set(ylabel=\"Distance [km]\")\nax3.set(ylabel=\"Airtime [h]\")\n\n\nplt.xticks(rotation=30)\nplt.tight_layout()\n\n\n\n\n\nFigure 1: Overview over the past 90 days"
   },
   {
     "objectID": "site_santamaria.html#annual-statistics",
@@ -98,11 +98,11 @@
     "text": "Code\nTARGET_SITE_ID = 4"
   },
   {
-    "objectID": "site_montegeneroso.html#past-90-days",
-    "href": "site_montegeneroso.html#past-90-days",
+    "objectID": "site_montegeneroso.html#last-90-days",
+    "href": "site_montegeneroso.html#last-90-days",
     "title": "Monte Generoso Statistics",
-    "section": "Past 90 days",
-    "text": "Past 90 days\n\n\nCode\nsns.set()\n\ndfs = df[df.datetime > datetime.now(timezone.utc) - timedelta(days=90)]\ndfg = dfs.groupby(df.date).datetime.count()\n\nfig, axs = plt.subplots(4, sharex=True, figsize=(7, 10))\nax = sns.scatterplot(x=dfg.index, y=dfg.values, marker=\"x\", ax=axs[0])\nax.set(ylabel=\"No. flights per day\")\nax = sns.scatterplot(x=\"datetime\", y=\"max_altitude_m\", marker=\"x\", data=dfs, ax=axs[1])\nax = sns.scatterplot(x=\"datetime\", y=\"length_km\", marker=\"x\", data=dfs, ax=axs[2])\nax = sns.scatterplot(x=\"datetime\", y=\"airtime_hours\", marker=\"x\", data=dfs, ax=axs[3])\n\nplt.xticks(rotation=30)\nplt.tight_layout()\n\n\n\n\n\nFigure 1: Overview over the past 90 days"
+    "section": "Last 90 days",
+    "text": "Last 90 days\n\n\nCode\nsns.set()\n\n# compute reference values based on the bast 5 years\nts = df.set_index(\"datetime\").sort_index()\noffset_5_years = f\"{5 * 365}D\"\nclim = ts[[\"max_altitude_m\", \"length_km\", \"airtime_hours\"]].resample(\"1D\").mean()\nclim = clim.groupby(clim.index.isocalendar().week)\nclim = clim.rolling(window=offset_5_years, center=False).mean().reset_index(0, drop=True)\nclim = clim.sort_index().rolling(\"15D\", center=True).mean()\n\nclim = clim[clim.index > datetime.now(timezone.utc) - timedelta(days=90)]\ndfs = df[df.datetime > datetime.now(timezone.utc) - timedelta(days=90)]\ndfg = dfs.groupby(df.date).datetime.count()\n\nfig, axs = plt.subplots(4, sharex=True, figsize=(7, 10))\nax0 = sns.scatterplot(x=dfg.index, y=dfg.values, marker=\"x\", ax=axs[0])\nax1 = sns.scatterplot(x=\"datetime\", y=\"max_altitude_m\", marker=\"x\", data=dfs, ax=axs[1])\nax2 = sns.scatterplot(x=\"datetime\", y=\"length_km\", marker=\"x\", data=dfs, ax=axs[2])\nax3 = sns.scatterplot(x=\"datetime\", y=\"airtime_hours\", marker=\"x\", data=dfs, ax=axs[3])\n\n# add reference lines\nax1.plot(clim.index, clim.max_altitude_m, color=\"tab:red\")\nax2.plot(clim.index, clim.length_km, color=\"tab:red\")\nax3.plot(clim.index, clim.airtime_hours, color=\"tab:red\")\n\nax0.set(ylabel=\"No. flights per day\")\nax1.set(ylabel=\"Max altitude [m]\")\nax2.set(ylabel=\"Distance [km]\")\nax3.set(ylabel=\"Airtime [h]\")\n\n\nplt.xticks(rotation=30)\nplt.tight_layout()\n\n\n\n\n\nFigure 1: Overview over the past 90 days"
   },
   {
     "objectID": "site_montegeneroso.html#annual-statistics",
@@ -126,11 +126,11 @@
     "text": "Code\nTARGET_SITE_ID = 5"
   },
   {
-    "objectID": "site_mornera.html#past-90-days",
-    "href": "site_mornera.html#past-90-days",
+    "objectID": "site_mornera.html#last-90-days",
+    "href": "site_mornera.html#last-90-days",
     "title": "Mornera Statistics",
-    "section": "Past 90 days",
-    "text": "Past 90 days\n\n\nCode\nsns.set()\n\ndfs = df[df.datetime > datetime.now(timezone.utc) - timedelta(days=90)]\ndfg = dfs.groupby(df.date).datetime.count()\n\nfig, axs = plt.subplots(4, sharex=True, figsize=(7, 10))\nax = sns.scatterplot(x=dfg.index, y=dfg.values, marker=\"x\", ax=axs[0])\nax.set(ylabel=\"No. flights per day\")\nax = sns.scatterplot(x=\"datetime\", y=\"max_altitude_m\", marker=\"x\", data=dfs, ax=axs[1])\nax = sns.scatterplot(x=\"datetime\", y=\"length_km\", marker=\"x\", data=dfs, ax=axs[2])\nax = sns.scatterplot(x=\"datetime\", y=\"airtime_hours\", marker=\"x\", data=dfs, ax=axs[3])\n\nplt.xticks(rotation=30)\nplt.tight_layout()\n\n\n\n\n\nFigure 1: Overview over the past 90 days"
+    "section": "Last 90 days",
+    "text": "Last 90 days\n\n\nCode\nsns.set()\n\n# compute reference values based on the bast 5 years\nts = df.set_index(\"datetime\").sort_index()\noffset_5_years = f\"{5 * 365}D\"\nclim = ts[[\"max_altitude_m\", \"length_km\", \"airtime_hours\"]].resample(\"1D\").mean()\nclim = clim.groupby(clim.index.isocalendar().week)\nclim = clim.rolling(window=offset_5_years, center=False).mean().reset_index(0, drop=True)\nclim = clim.sort_index().rolling(\"15D\", center=True).mean()\n\nclim = clim[clim.index > datetime.now(timezone.utc) - timedelta(days=90)]\ndfs = df[df.datetime > datetime.now(timezone.utc) - timedelta(days=90)]\ndfg = dfs.groupby(df.date).datetime.count()\n\nfig, axs = plt.subplots(4, sharex=True, figsize=(7, 10))\nax0 = sns.scatterplot(x=dfg.index, y=dfg.values, marker=\"x\", ax=axs[0])\nax1 = sns.scatterplot(x=\"datetime\", y=\"max_altitude_m\", marker=\"x\", data=dfs, ax=axs[1])\nax2 = sns.scatterplot(x=\"datetime\", y=\"length_km\", marker=\"x\", data=dfs, ax=axs[2])\nax3 = sns.scatterplot(x=\"datetime\", y=\"airtime_hours\", marker=\"x\", data=dfs, ax=axs[3])\n\n# add reference lines\nax1.plot(clim.index, clim.max_altitude_m, color=\"tab:red\")\nax2.plot(clim.index, clim.length_km, color=\"tab:red\")\nax3.plot(clim.index, clim.airtime_hours, color=\"tab:red\")\n\nax0.set(ylabel=\"No. flights per day\")\nax1.set(ylabel=\"Max altitude [m]\")\nax2.set(ylabel=\"Distance [km]\")\nax3.set(ylabel=\"Airtime [h]\")\n\n\nplt.xticks(rotation=30)\nplt.tight_layout()\n\n\n\n\n\nFigure 1: Overview over the past 90 days"
   },
   {
     "objectID": "site_mornera.html#annual-statistics",
@@ -151,7 +151,7 @@
     "href": "index.html",
     "title": "Site Statistics",
     "section": "",
-    "text": "Carì Statistics\n\n\nData analysis of flight reports for the Carì site.\n\n\n\n\n\n\n\n\n\nDec 30, 2022\n\n\n\n\n\n\n\n\nCimetta Statistics\n\n\nData analysis of flight reports for the Cimetta site.\n\n\n\n\n\n\n\n\n\nDec 30, 2022\n\n\n\n\n\n\n\n\nMonte Generoso Statistics\n\n\nData analysis of flight reports for the Monte Generoso site.\n\n\n\n\n\n\n\n\n\nDec 30, 2022\n\n\n\n\n\n\n\n\nMonte Lema Statistics\n\n\nData analysis of flight reports for the Monte Lema site.\n\n\n\n\n\n\n\n\n\nDec 30, 2022\n\n\n\n\n\n\n\n\nMonte Tamaro Statistics\n\n\nData analysis of flight reports for the Monte Tamaro site.\n\n\n\n\n\n\n\n\n\nDec 30, 2022\n\n\n\n\n\n\n\n\nMornera Statistics\n\n\nData analysis of flight reports for the Mornera site.\n\n\n\n\n\n\n\n\n\nDec 30, 2022\n\n\n\n\n\n\n\n\nSanta Maria Statistics\n\n\nData analysis of flight reports for the Santa Maria in Calanca site.\n\n\n\n\n\n\n\n\n\nDec 30, 2022\n\n\n\n\n\n\nNo matching items"
+    "text": "Carì Statistics\n\n\nData analysis of flight reports for the Carì site.\n\n\n\n\n\n\n\n\n\nDec 31, 2022\n\n\n\n\n\n\n\n\nCimetta Statistics\n\n\nData analysis of flight reports for the Cimetta site.\n\n\n\n\n\n\n\n\n\nDec 31, 2022\n\n\n\n\n\n\n\n\nMonte Generoso Statistics\n\n\nData analysis of flight reports for the Monte Generoso site.\n\n\n\n\n\n\n\n\n\nDec 31, 2022\n\n\n\n\n\n\n\n\nMonte Lema Statistics\n\n\nData analysis of flight reports for the Monte Lema site.\n\n\n\n\n\n\n\n\n\nDec 31, 2022\n\n\n\n\n\n\n\n\nMonte Tamaro Statistics\n\n\nData analysis of flight reports for the Monte Tamaro site.\n\n\n\n\n\n\n\n\n\nDec 31, 2022\n\n\n\n\n\n\n\n\nMornera Statistics\n\n\nData analysis of flight reports for the Mornera site.\n\n\n\n\n\n\n\n\n\nDec 31, 2022\n\n\n\n\n\n\n\n\nSanta Maria Statistics\n\n\nData analysis of flight reports for the Santa Maria in Calanca site.\n\n\n\n\n\n\n\n\n\nDec 31, 2022\n\n\n\n\n\n\nNo matching items"
   },
   {
     "objectID": "site_cari.html",
@@ -161,11 +161,11 @@
     "text": "Code\nTARGET_SITE_ID = 2"
   },
   {
-    "objectID": "site_cari.html#past-90-days",
-    "href": "site_cari.html#past-90-days",
+    "objectID": "site_cari.html#last-90-days",
+    "href": "site_cari.html#last-90-days",
     "title": "Carì Statistics",
-    "section": "Past 90 days",
-    "text": "Past 90 days\n\n\nCode\nsns.set()\n\ndfs = df[df.datetime > datetime.now(timezone.utc) - timedelta(days=90)]\ndfg = dfs.groupby(df.date).datetime.count()\n\nfig, axs = plt.subplots(4, sharex=True, figsize=(7, 10))\nax = sns.scatterplot(x=dfg.index, y=dfg.values, marker=\"x\", ax=axs[0])\nax.set(ylabel=\"No. flights per day\")\nax = sns.scatterplot(x=\"datetime\", y=\"max_altitude_m\", marker=\"x\", data=dfs, ax=axs[1])\nax = sns.scatterplot(x=\"datetime\", y=\"length_km\", marker=\"x\", data=dfs, ax=axs[2])\nax = sns.scatterplot(x=\"datetime\", y=\"airtime_hours\", marker=\"x\", data=dfs, ax=axs[3])\n\nplt.xticks(rotation=30)\nplt.tight_layout()\n\n\n\n\n\nFigure 1: Overview over the past 90 days"
+    "section": "Last 90 days",
+    "text": "Last 90 days\n\n\nCode\nsns.set()\n\n# compute reference values based on the bast 5 years\nts = df.set_index(\"datetime\").sort_index()\noffset_5_years = f\"{5 * 365}D\"\nclim = ts[[\"max_altitude_m\", \"length_km\", \"airtime_hours\"]].resample(\"1D\").mean()\nclim = clim.groupby(clim.index.isocalendar().week)\nclim = clim.rolling(window=offset_5_years, center=False).mean().reset_index(0, drop=True)\nclim = clim.sort_index().rolling(\"15D\", center=True).mean()\n\nclim = clim[clim.index > datetime.now(timezone.utc) - timedelta(days=90)]\ndfs = df[df.datetime > datetime.now(timezone.utc) - timedelta(days=90)]\ndfg = dfs.groupby(df.date).datetime.count()\n\nfig, axs = plt.subplots(4, sharex=True, figsize=(7, 10))\nax0 = sns.scatterplot(x=dfg.index, y=dfg.values, marker=\"x\", ax=axs[0])\nax1 = sns.scatterplot(x=\"datetime\", y=\"max_altitude_m\", marker=\"x\", data=dfs, ax=axs[1])\nax2 = sns.scatterplot(x=\"datetime\", y=\"length_km\", marker=\"x\", data=dfs, ax=axs[2])\nax3 = sns.scatterplot(x=\"datetime\", y=\"airtime_hours\", marker=\"x\", data=dfs, ax=axs[3])\n\n# add reference lines\nax1.plot(clim.index, clim.max_altitude_m, color=\"tab:red\")\nax2.plot(clim.index, clim.length_km, color=\"tab:red\")\nax3.plot(clim.index, clim.airtime_hours, color=\"tab:red\")\n\nax0.set(ylabel=\"No. flights per day\")\nax1.set(ylabel=\"Max altitude [m]\")\nax2.set(ylabel=\"Distance [km]\")\nax3.set(ylabel=\"Airtime [h]\")\n\n\nplt.xticks(rotation=30)\nplt.tight_layout()\n\n\n\n\n\nFigure 1: Overview over the past 90 days"
   },
   {
     "objectID": "site_cari.html#annual-statistics",
@@ -189,11 +189,11 @@
     "text": "Code\nTARGET_SITE_ID = 6"
   },
   {
-    "objectID": "site_montelema.html#past-90-days",
-    "href": "site_montelema.html#past-90-days",
+    "objectID": "site_montelema.html#last-90-days",
+    "href": "site_montelema.html#last-90-days",
     "title": "Monte Lema Statistics",
-    "section": "Past 90 days",
-    "text": "Past 90 days\n\n\nCode\nsns.set()\n\ndfs = df[df.datetime > datetime.now(timezone.utc) - timedelta(days=90)]\ndfg = dfs.groupby(df.date).datetime.count()\n\nfig, axs = plt.subplots(4, sharex=True, figsize=(7, 10))\nax = sns.scatterplot(x=dfg.index, y=dfg.values, marker=\"x\", ax=axs[0])\nax.set(ylabel=\"No. flights per day\")\nax = sns.scatterplot(x=\"datetime\", y=\"max_altitude_m\", marker=\"x\", data=dfs, ax=axs[1])\nax = sns.scatterplot(x=\"datetime\", y=\"length_km\", marker=\"x\", data=dfs, ax=axs[2])\nax = sns.scatterplot(x=\"datetime\", y=\"airtime_hours\", marker=\"x\", data=dfs, ax=axs[3])\n\nplt.xticks(rotation=30)\nplt.tight_layout()\n\n\n\n\n\nFigure 1: Overview over the past 90 days"
+    "section": "Last 90 days",
+    "text": "Last 90 days\n\n\nCode\nsns.set()\n\n# compute reference values based on the bast 5 years\nts = df.set_index(\"datetime\").sort_index()\noffset_5_years = f\"{5 * 365}D\"\nclim = ts[[\"max_altitude_m\", \"length_km\", \"airtime_hours\"]].resample(\"1D\").mean()\nclim = clim.groupby(clim.index.isocalendar().week)\nclim = clim.rolling(window=offset_5_years, center=False).mean().reset_index(0, drop=True)\nclim = clim.sort_index().rolling(\"15D\", center=True).mean()\n\nclim = clim[clim.index > datetime.now(timezone.utc) - timedelta(days=90)]\ndfs = df[df.datetime > datetime.now(timezone.utc) - timedelta(days=90)]\ndfg = dfs.groupby(df.date).datetime.count()\n\nfig, axs = plt.subplots(4, sharex=True, figsize=(7, 10))\nax0 = sns.scatterplot(x=dfg.index, y=dfg.values, marker=\"x\", ax=axs[0])\nax1 = sns.scatterplot(x=\"datetime\", y=\"max_altitude_m\", marker=\"x\", data=dfs, ax=axs[1])\nax2 = sns.scatterplot(x=\"datetime\", y=\"length_km\", marker=\"x\", data=dfs, ax=axs[2])\nax3 = sns.scatterplot(x=\"datetime\", y=\"airtime_hours\", marker=\"x\", data=dfs, ax=axs[3])\n\n# add reference lines\nax1.plot(clim.index, clim.max_altitude_m, color=\"tab:red\")\nax2.plot(clim.index, clim.length_km, color=\"tab:red\")\nax3.plot(clim.index, clim.airtime_hours, color=\"tab:red\")\n\nax0.set(ylabel=\"No. flights per day\")\nax1.set(ylabel=\"Max altitude [m]\")\nax2.set(ylabel=\"Distance [km]\")\nax3.set(ylabel=\"Airtime [h]\")\n\n\nplt.xticks(rotation=30)\nplt.tight_layout()\n\n\n\n\n\nFigure 1: Overview over the past 90 days"
   },
   {
     "objectID": "site_montelema.html#annual-statistics",
