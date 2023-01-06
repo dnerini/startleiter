@@ -1,6 +1,6 @@
 ---
-title: Santa Maria Statistics
-subtitle: Data analysis of flight reports for the Santa Maria in Calanca site.
+title: Santa Maria
+subtitle: 1200 masl
 date: today
 format:
   html:
@@ -13,3 +13,5 @@ TARGET_SITE_ID = 7
 ```
 
 {{< include .compute_statistics.qmd >}}
+
+![](site_santamaria_files/figure-html/fig-counts-by-year-output-1.png)

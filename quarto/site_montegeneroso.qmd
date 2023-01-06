@@ -1,6 +1,6 @@
 ---
-title: Monte Generoso Statistics
-subtitle: Data analysis of flight reports for the Monte Generoso site.
+title: Monte Generoso
+subtitle: 1600 masl
 date: today
 format:
   html:
@@ -13,3 +13,5 @@ TARGET_SITE_ID = 4
 ```
 
 {{< include .compute_statistics.qmd >}}
+
+![](site_montegeneroso_files/figure-html/fig-counts-by-year-output-1.png)

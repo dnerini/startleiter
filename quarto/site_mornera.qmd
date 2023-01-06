@@ -1,6 +1,6 @@
 ---
-title: Mornera Statistics
-subtitle: Data analysis of flight reports for the Mornera site.
+title: Mornera
+subtitle: 1400 masl
 date: today
 format:
   html:
@@ -13,3 +13,5 @@ TARGET_SITE_ID = 5
 ```
 
 {{< include .compute_statistics.qmd >}}
+
+![](site_mornera_files/figure-html/fig-counts-by-year-output-1.png)

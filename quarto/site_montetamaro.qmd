@@ -1,6 +1,6 @@
 ---
-title: Monte Tamaro Statistics
-subtitle: Data analysis of flight reports for the Monte Tamaro site.
+title: Monte Tamaro
+subtitle: 1500 masl
 date: today
 format:
   html:
@@ -13,3 +13,5 @@ TARGET_SITE_ID = 3
 ```
 
 {{< include .compute_statistics.qmd >}}
+
+![](site_montetamaro_files/figure-html/fig-counts-by-year-output-1.png)

@@ -1,5 +1,5 @@
 ---
-title: "Site Statistics"
-listing:
-    contents: site_*.qmd
+title: "Startleiter"
 ---
+
+{{< include ../README.md >}}

@@ -1,0 +1,8 @@
+---
+title: "Statistics"
+listing:
+    contents: site_*.qmd
+---
+
+Site statistics are based on flight reports extracted from [XContest](https://www.xcontest.org/).
+The plots and figures are updated once a week.

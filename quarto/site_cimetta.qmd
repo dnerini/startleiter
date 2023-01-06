@@ -1,6 +1,6 @@
 ---
-title: Cimetta Statistics
-subtitle: Data analysis of flight reports for the Cimetta site.
+title: Cimetta
+subtitle: 1600 masl
 date: today
 format:
   html:
@@ -13,3 +13,5 @@ TARGET_SITE_ID = 1
 ```
 
 {{< include .compute_statistics.qmd >}}
+
+![](site_cimetta_files/figure-html/fig-counts-by-year-output-1.png)
