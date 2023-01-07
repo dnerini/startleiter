@@ -1,6 +1,8 @@
 import logging
+import re
 import time
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -9,12 +11,13 @@ import xarray as xr
 from bs4 import BeautifulSoup
 
 import startleiter.scraping as scr
+from startleiter.database import Source, Station
 from startleiter.database import Database
 from startleiter.utils import to_wind_components
 from startleiter import config as CFG
 
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 COUNTER = 0
 BASE_URL = "http://weather.uwyo.edu"
@@ -149,12 +152,37 @@ def scrape(station_name, from_validtime, to_validtime=None):
     this_query = {"STNM": station_id}
     this_query.update(year_month_from_to(from_validtime, to_validtime))
     query_url = scr.build_query(SEARCH_URL, DEFAULT_QUERY, this_query)
-    logger.info(query_url)
+    LOGGER.info(query_url)
 
     page = requests.get(query_url)
     soup = BeautifulSoup(page.content, "html.parser")
 
     return sounding(soup)
+
+
+def save_sounding_data(soundings, source_id, station_id):
+    data = [sound["data"] for sound in soundings.values()]
+    validtimes = list(soundings.keys())
+    if len(data) > 1:
+        data = xr.concat(data, "validtime")
+    data = data.assign_coords(validtime=validtimes)
+    outdir = Path(CFG["netcdf"]["repo"])
+    outdir.mkdir(exist_ok=True)
+    fn = f"sounding-{source_id}-{station_id}-{validtimes[0]:%Y%m}.nc"
+    fn = outdir / fn
+    data.to_netcdf(fn)
+    LOGGER.info(f"Saved: {fn}")
+    return fn
+
+
+def get_last_sounding_date(source_id: int, station_id: int) -> datetime:
+    wildcard = f"sounding-{source_id}-{station_id}-*.nc"
+    netcdf_dir = Path(CFG["netcdf"]["repo"])
+    fns = list(netcdf_dir.glob(wildcard))
+    dates_str = [re.search(r"\d{6}", str(fn)).group() for fn in fns]
+    latest_date = datetime.strptime(max(dates_str), "%Y%m").date()
+    next_month = latest_date.replace(day=28) + timedelta(days=4)
+    return next_month - timedelta(days=next_month.day)
 
 
 if __name__ == "__main__":
@@ -166,22 +194,22 @@ if __name__ == "__main__":
         level=logging.INFO,
     )
 
-    # Define source
+    db = Database()
+
     source = CFG["sources"]["uwyo"]
     station = CFG["stations"]["Cameri"]
-
-    # Connect to database
-    db = Database(source, station=station)
+    source_id = db.add(Source, source)
+    station.update({"source_id": source_id})
+    station_id = db.add(Station, station)
 
     t0 = time.monotonic()
     total_sleep = 0
-    date_start = db.query_last_sounding(
-        default_start=datetime(2021, 6, 1, 0)
-    ) + timedelta(days=1)
-    end_dates = pd.date_range(date_start, datetime.utcnow(), freq="M")
-    print(date_start)
-    for n, date in enumerate(end_dates):
-        logger.info(f"Retrieving sounding data for {date:%b %Y}")
-        soundings = scrape(station["name"], date.replace(day=1), date)
-        db.insert_soundings(soundings)
-        total_sleep = scr.pacing(n, len(end_dates), t0, 200, total_sleep)
+    last_sounding = get_last_sounding_date(source_id, station_id)
+    first_month_start = max(last_sounding, date(2021, 6, 1)) + timedelta(days=1)
+    all_month_ends = pd.date_range(first_month_start, datetime.utcnow(), freq="M")
+    for n, month_end in enumerate(all_month_ends):
+        LOGGER.info(f"Retrieving UWYO sounding data for {month_end:%b %Y}")
+        month_start = month_end.replace(day=1)
+        soundings = scrape(station["name"], month_start, month_end)
+        save_sounding_data(soundings, source_id, station_id)
+        total_sleep = scr.pacing(n, len(all_month_ends), t0, 200, total_sleep)

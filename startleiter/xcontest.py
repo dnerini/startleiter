@@ -16,6 +16,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 import startleiter.scraping as scr
+from startleiter.database import Site, Source, Flight
 from startleiter.database import Database
 from startleiter import config as CFG
 
@@ -220,16 +221,81 @@ def parse_flights(browser, pace):
     return flights_data
 
 
+def preprocess_xcontest(flight, source_id, site_id):
+    """Reformat raw xcontest data before appending to the database"""
+    try:
+        datetime_str = f"{flight[2]}+00:00" if flight[2][-3:] == "UTC" else flight[2]
+        airtime = flight[11] if flight[11] is None else flight[11].split(":")[:2]
+        altitude = flight[12] if flight[12] is None else flight[12].replace(" m", "")
+        alt_gain = flight[13] if flight[13] is None else flight[13].replace(" m", "")
+        max_climb = flight[14] if flight[14] is None else flight[14].replace(" m/s", "")
+        max_sink = flight[15] if flight[15] is None else flight[15].replace(" m/s", "")
+        tracklog_length = (
+            flight[16] if flight[16] is None else flight[16].replace(" km", "")
+        )
+        free_distance = flight[17] if flight[17] is None else flight[17].split("/")
+        out = {
+            "source_id": source_id,
+            "site_id": site_id,
+            "flid": flight[0],
+            "flno": flight[1],
+            "datetime": datetime.strptime(datetime_str, "%d.%m.%y %H:%MUTC%z"),
+            "pilot": flight[3][2:],
+            "route": flight[10],
+            "length_km": float(flight[6].replace(" km", "")),
+            "points": float(flight[7].replace(" p.", "")),
+            "glider": flight[9] if flight[9] else None,
+            "glider_cat": flight[8],
+            "airtime": airtime
+            if airtime is None
+            else timedelta(hours=int(airtime[0]), minutes=int(airtime[1])),
+            "max_altitude_m": altitude if altitude is None else int(altitude),
+            "max_alt_gain_m": alt_gain if alt_gain is None else int(alt_gain),
+            "max_climb_ms": max_climb if max_climb is None else float(max_climb),
+            "max_sink_ms": max_sink if max_sink is None else float(max_sink),
+            "tracklog_length_km": tracklog_length
+            if tracklog_length is None
+            else float(tracklog_length),
+            "free_distance_1_km": free_distance
+            if free_distance is None
+            else float(free_distance[0].replace(" km", "")),
+            "free_distance_2_km": free_distance
+            if free_distance is None
+            else float(free_distance[1].replace(" km", "")),
+        }
+    except ValueError:
+        LOGGER.error(f"Could not parse {flight}")
+        return None
+    return out
+
+
+def query_last_flight_id(db, site_id):
+    obj = (
+        db.session.query(Flight)
+        .filter_by(site_id=site_id)
+        .order_by(Flight.flno.desc())
+        .first()
+    )
+    flight_no = 0 if obj is None else obj.flno
+    return flight_no
+
+
 def main(site, pace):
     """Main scraping routine for xcontest.org"""
-    # Connect to database
-    db = Database(CFG["sources"]["xcontest"], site)
+
+    db = Database()
+
+    source = CFG["sources"]["xcontest"]
+    source_id = db.add(Source, source)
+    site.update({"source_id": source_id})
+    site_id = db.add(Site, site)
 
     browser = scr.launch_browser()
     browser = login_xcontest(browser)
 
     try:
-        id_start = db.query_last_flight()
+        id_start = query_last_flight_id(db, site_id)
+        LOGGER.info(f"Starting querying from flight no. {id_start}.")
         while COUNTER < STOP_AFTER:
             LOGGER.debug(
                 f"XContest Flight Chunk {id_start} to {id_start + min(STOP_AFTER - 1, NUM_FLIGHTS_ON_PAGE)}"
@@ -244,7 +310,12 @@ def main(site, pace):
             browser.get(query_url)
             flight_chunk = parse_flights(browser, pace)
             if flight_chunk:
-                db.insert_flights(flight_chunk)
+                db.add_all(
+                    Flight,
+                    flight_chunk,
+                    preprocess_fn=preprocess_xcontest,
+                    preprocess_kwargs={"source_id": source_id, "site_id": site_id},
+                )
             if len(flight_chunk) == NUM_FLIGHTS_ON_PAGE:
                 id_start += NUM_FLIGHTS_ON_PAGE
             else:
