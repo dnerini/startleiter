@@ -3,7 +3,16 @@ import os
 
 import pandas as pd
 from sqlalchemy import create_engine
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, Interval, String
+from sqlalchemy import (
+    Column,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    Interval,
+    String,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 
@@ -17,7 +26,7 @@ class Source(Base):
     __tablename__ = "source"
     id = Column(Integer, primary_key=True)
     name = Column(String(30))
-    base_url = Column(String(30))
+    base_url = Column(String(50))
     sites = relationship("Site", backref="source", lazy=True)
     flights = relationship("Flight", backref="source", lazy=True)
 
@@ -69,6 +78,19 @@ class Flight(Base):
     tracklog_length_km = Column(Float)
     free_distance_1_km = Column(Float)
     free_distance_2_km = Column(Float)
+
+
+class Prediction(Base):
+    __tablename__ = "prediction"
+    id = Column(Integer, primary_key=True)
+    source_id = Column(Integer, ForeignKey("source.id"), nullable=False)
+    site_id = Column(Integer, ForeignKey("site.id"), nullable=False)
+    reftime = Column(Date)
+    validtime = Column(Date)
+    leadtime_days = Column(Integer)
+    flying_probability = Column(Float)
+    max_altitude_masl = Column(Float)
+    max_distance_km = Column(Float)
 
 
 class Database:

@@ -10,6 +10,10 @@ base_url = "http://weather.uwyo.edu"
 name = "rucsoundings"
 base_url = "https://rucsoundings.noaa.gov"
 
+[sources."startleiter"]
+name = "starleiter-app"
+base_url = "https://startleiter.herokuapp.com"
+
 [sites."Cimetta"]
 name = "Cimetta"
 country = "CH"
