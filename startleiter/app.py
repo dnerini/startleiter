@@ -1,4 +1,5 @@
 import logging
+import pickle
 from datetime import datetime, timedelta
 from functools import lru_cache
 from io import BytesIO
@@ -37,7 +38,7 @@ AVAILABLE_SITES = Literal[
 ALT_BINS = [0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 2000]
 DIST_BINS = [10, 25, 50, 75, 100, 125, 150, 200]
 
-PRESSURE_MIN_hPa = 400
+PRESSURE_MIN_hPa = 200
 
 STATIONS = CFG["stations"]
 
@@ -56,6 +57,8 @@ MODEL_FLYABILITY = tf.keras.models.load_model("models/flyability.h5")
 MODEL_MAX_ALT = tf.keras.models.load_model("models/fly_max_alt.h5")
 MODEL_MAX_DIST = tf.keras.models.load_model("models/fly_max_dist.h5")
 
+FLYABILITY_CALIBRATION_CURVE = pickle.load(open( "models/flyability_calibration_curve.pkl", "rb" ) )
+
 MOMENTS_FLYABILITY = xr.load_dataset("models/flyability_moments.nc")
 MOMENTS_MAX_ALT = xr.load_dataset("models/fly_max_alt_moments.nc")
 MOMENTS_MAX_DIST = xr.load_dataset("models/fly_max_dist_moments.nc")
@@ -73,6 +76,10 @@ async def basic_view():
 def parse_time(time: str, leadtime_days) -> datetime:
     if time == "latest":
         time = datetime.utcnow()
+    elif time == "yesterday":
+        time = datetime.utcnow()
+        time -= timedelta(days=1)
+        leadtime_days = None
     elif time == "today":
         time = datetime.utcnow()
         leadtime_days = None
@@ -160,12 +167,14 @@ def predict(site: str, sounding: xr.Dataset):
     # flyability
     inputs = preprocess(sounding, site, MOMENTS_FLYABILITY)
     fly_prob = float(MODEL_FLYABILITY.predict(inputs.values[None, ..., 0])[0][0])
+    fly_prob = float(FLYABILITY_CALIBRATION_CURVE.predict([fly_prob]))
 
     # max altitude and distance
     if fly_prob < FLY_PROB_THR:
         max_alt_gain = 0
         max_dist = 0
     else:
+        sounding = sounding.sel(level=slice(1000, 400))
         inputs = preprocess(sounding, site, MOMENTS_MAX_ALT)
         max_alt_gain = ALT_BINS[
             int(MODEL_MAX_ALT.predict(inputs.values[None, ..., 0])[0].argmax())
@@ -225,7 +234,7 @@ async def plot_site(
         fly_prob,
         max_alt,
         max_dist,
-        min_pressure_hPa=PRESSURE_MIN_hPa,
+        min_pressure_hPa=400,
     )
     image_file = BytesIO()
     plt.savefig(image_file)
