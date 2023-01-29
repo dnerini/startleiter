@@ -6,6 +6,8 @@ format:
   html:
     code-fold: true
 jupyter: python3
+image: "statistics_cari_files/figure-html/fig-counts-by-year-output-1.png"
+
 ---
 
 ```{python}
@@ -13,5 +15,3 @@ TARGET_SITE_ID = 2
 ```
 
 {{< include .compute_statistics.qmd >}}
-
-![](site_cari_files/figure-html/fig-counts-by-year-output-1.png)

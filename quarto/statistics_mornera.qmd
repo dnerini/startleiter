@@ -6,6 +6,7 @@ format:
   html:
     code-fold: true
 jupyter: python3
+image: "statistics_mornera_files/figure-html/fig-counts-by-year-output-1.png"
 ---
 
 ```{python}
@@ -13,5 +14,3 @@ TARGET_SITE_ID = 5
 ```
 
 {{< include .compute_statistics.qmd >}}
-
-![](site_mornera_files/figure-html/fig-counts-by-year-output-1.png)
