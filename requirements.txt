@@ -8,7 +8,7 @@ psutil
 psycopg2-binary
 requests
 selenium
-sqlalchemy
+sqlalchemy<2
 toml
 fastapi
 uvicorn
