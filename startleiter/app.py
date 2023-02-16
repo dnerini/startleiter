@@ -57,7 +57,9 @@ MODEL_FLYABILITY = tf.keras.models.load_model("models/flyability.h5")
 MODEL_MAX_ALT = tf.keras.models.load_model("models/fly_max_alt.h5")
 MODEL_MAX_DIST = tf.keras.models.load_model("models/fly_max_dist.h5")
 
-FLYABILITY_CALIBRATION_CURVE = pickle.load(open( "models/flyability_calibration_curve.pkl", "rb" ) )
+FLYABILITY_CALIBRATION_CURVE = pickle.load(
+    open("models/flyability_calibration_curve.pkl", "rb")
+)
 
 MOMENTS_FLYABILITY = xr.load_dataset("models/flyability_moments.nc")
 MOMENTS_MAX_ALT = xr.load_dataset("models/fly_max_alt_moments.nc")
@@ -73,7 +75,7 @@ async def basic_view():
     return RedirectResponse("/docs")
 
 
-def parse_time(time: str, leadtime_days) -> datetime:
+def parse_time(time: str, leadtime_days) -> tuple[datetime, int, datetime]:
     if time == "latest":
         time = datetime.utcnow()
     elif time == "yesterday":
@@ -90,7 +92,8 @@ def parse_time(time: str, leadtime_days) -> datetime:
         time = pd.to_datetime(time)
     if time.date() > datetime.utcnow().date():
         raise ValueError("Argument 'time' cannot be in the future!")
-    return time, leadtime_days
+    validtime = time + timedelta(days=(leadtime_days or 0))
+    return time, leadtime_days, validtime
 
 
 @try_wait()
@@ -161,8 +164,11 @@ def preprocess(sounding, site, moments):
     return xr.concat((inputs_sounding, inputs_embedding), "variable")
 
 
-def predict(site: str, sounding: xr.Dataset):
+@lru_cache(maxsize=50)
+def predict(site: str, time: datetime, leadtime_days: int):
     """Predict flyability, max altitude and max distance."""
+
+    sounding = get_sounding("Cameri", time, leadtime_days)
 
     # flyability
     inputs = preprocess(sounding, site, MOMENTS_FLYABILITY)
@@ -201,10 +207,8 @@ async def predict_site(
     time: str = "latest",
     leadtime_days: Optional[int] = None,
 ):
-    time, leadtime_days = parse_time(time, leadtime_days)
-    sounding = get_sounding("Cameri", time, leadtime_days)
-    validtime = sounding.attrs["validtime"]
-    fly_prob, max_alt, max_dist = predict(site, sounding)
+    time, leadtime_days, validtime = parse_time(time, leadtime_days)
+    fly_prob, max_alt, max_dist = predict(site, time, leadtime_days)
 
     return {
         "site": site,
@@ -222,9 +226,9 @@ async def plot_site(
     time: str = "latest",
     leadtime_days: Optional[int] = None,
 ):
-    time, leadtime_days = parse_time(time, leadtime_days)
+    time, leadtime_days, _ = parse_time(time, leadtime_days)
     sounding = get_sounding("Cameri", time, leadtime_days)
-    fly_prob, max_alt, max_dist = predict(site, sounding)
+    fly_prob, max_alt, max_dist = predict(site, time, leadtime_days)
     shap_values = explain(site, sounding)
 
     fig = explainable_plot(
@@ -250,18 +254,15 @@ async def outlook_site(site: AVAILABLE_SITES = "Cimetta"):
     max_alts = []
     max_dists = []
     time = datetime.utcnow()
-    sounding = get_sounding("Cameri", time, None)
-    validtime = sounding.attrs["validtime"]
-    fly_prob, max_alt, max_dist = predict(site, sounding)
-    validtimes.append(validtime)
+    fly_prob, max_alt, max_dist = predict(site, time, None)
+    validtimes.append(time)
     fly_probs.append(fly_prob)
     max_alts.append(max_alt)
     max_dists.append(max_dist)
     for leadtime_days in range(1, 9):
         print(leadtime_days)
-        sounding = get_sounding("Cameri", time, leadtime_days)
-        validtime = sounding.attrs["validtime"]
-        fly_prob, max_alt, max_dist = predict(site, sounding)
+        validtime = time + timedelta(days=leadtime_days)
+        fly_prob, max_alt, max_dist = predict(site, time, leadtime_days)
         validtimes.append(validtime)
         fly_probs.append(fly_prob)
         max_alts.append(max_alt)
