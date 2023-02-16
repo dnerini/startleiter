@@ -2,7 +2,8 @@
 FROM python:3.9 AS builder
 COPY ./requirements.txt .
 
-RUN pip install --user --upgrade pip && pip install --user --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+RUN pip list -v
 
 # second unnamed stage
 FROM python:3.9-slim
