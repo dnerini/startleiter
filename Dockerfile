@@ -12,7 +12,7 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # copy only the dependencies installation from the 1st stage image
-COPY --from=builder /root/.local /root/.local
+COPY --from=builder /usr/local /usr/local
 
 # install project
 COPY . .
