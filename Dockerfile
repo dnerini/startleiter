@@ -1,26 +1,26 @@
-# pull official base image
+# first stage
+FROM python:3.9 AS builder
+COPY ./requirements.txt .
+
+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+
+# second unnamed stage
 FROM python:3.9-slim
 
 # set work directory
 WORKDIR /app
 
-# set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-ENV DEBUG 0
-
-RUN apt update \
-    && apt install --no-install-recommends -y build-essential gcc ca-certificates \
-    && apt clean && rm -rf /var/lib/apt/lists/*
-
-# install dependencies
-COPY ./requirements.txt .
-# RUN pip install --upgrade pip && pip install tensorflow -f https://tf.kmtea.eu/whl/stable.html && pip install --no-cache-dir -r requirements.txt
-RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+# copy only the dependencies installation from the 1st stage image
+COPY --from=builder /root/.local /root/.local
 
 # install project
 COPY . .
 RUN pip install .
+
+# set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+ENV DEBUG 0
 
 # add and run as non-root user
 RUN useradd --create-home --shell /bin/bash myuser

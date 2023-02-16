@@ -7,3 +7,5 @@ notebooks/
 tests/
 .github/
 .git/
+quarto/
+build/
