@@ -2,13 +2,13 @@
   {
     "listing": "/statistics.html",
     "items": [
-      "/site_cari.html",
-      "/site_cimetta.html",
-      "/site_montegeneroso.html",
-      "/site_montelema.html",
-      "/site_montetamaro.html",
-      "/site_mornera.html",
-      "/site_santamaria.html"
+      "/statistics_cari.html",
+      "/statistics_cimetta.html",
+      "/statistics_montegeneroso.html",
+      "/statistics_montelema.html",
+      "/statistics_montetamaro.html",
+      "/statistics_mornera.html",
+      "/statistics_santamaria.html"
     ]
   }
 ]

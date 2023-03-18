@@ -1,43 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://github.com/dnerini/startleiter/site_montegeneroso.html</loc>
-    <lastmod>2023-03-12T05:17:45.136Z</lastmod>
-  </url>
-  <url>
-    <loc>https://github.com/dnerini/startleiter/site_santamaria.html</loc>
-    <lastmod>2023-03-12T05:18:08.004Z</lastmod>
-  </url>
-  <url>
-    <loc>https://github.com/dnerini/startleiter/statistics.html</loc>
-    <lastmod>2023-03-12T05:18:09.836Z</lastmod>
-  </url>
-  <url>
-    <loc>https://github.com/dnerini/startleiter/site_mornera.html</loc>
-    <lastmod>2023-03-12T05:18:31.953Z</lastmod>
-  </url>
-  <url>
-    <loc>https://github.com/dnerini/startleiter/site_cimetta.html</loc>
-    <lastmod>2023-03-12T05:18:54.485Z</lastmod>
-  </url>
-  <url>
-    <loc>https://github.com/dnerini/startleiter/site_montetamaro.html</loc>
-    <lastmod>2023-03-12T05:19:16.449Z</lastmod>
+    <loc>https://github.com/dnerini/startleiter/statistics_cari.html</loc>
+    <lastmod>2023-03-18T20:03:07.598Z</lastmod>
   </url>
   <url>
     <loc>https://github.com/dnerini/startleiter/about.html</loc>
-    <lastmod>2023-03-12T05:19:16.845Z</lastmod>
+    <lastmod>2023-03-18T20:03:08.478Z</lastmod>
   </url>
   <url>
-    <loc>https://github.com/dnerini/startleiter/site_cari.html</loc>
-    <lastmod>2023-03-12T05:19:38.685Z</lastmod>
+    <loc>https://github.com/dnerini/startleiter/statistics_montetamaro.html</loc>
+    <lastmod>2023-03-18T20:03:28.562Z</lastmod>
+  </url>
+  <url>
+    <loc>https://github.com/dnerini/startleiter/statistics_santamaria.html</loc>
+    <lastmod>2023-03-18T20:03:48.414Z</lastmod>
+  </url>
+  <url>
+    <loc>https://github.com/dnerini/startleiter/statistics.html</loc>
+    <lastmod>2023-03-18T20:03:49.954Z</lastmod>
+  </url>
+  <url>
+    <loc>https://github.com/dnerini/startleiter/statistics_mornera.html</loc>
+    <lastmod>2023-03-18T20:04:09.714Z</lastmod>
+  </url>
+  <url>
+    <loc>https://github.com/dnerini/startleiter/statistics_montelema.html</loc>
+    <lastmod>2023-03-18T20:04:29.398Z</lastmod>
+  </url>
+  <url>
+    <loc>https://github.com/dnerini/startleiter/statistics_cimetta.html</loc>
+    <lastmod>2023-03-18T20:04:49.078Z</lastmod>
+  </url>
+  <url>
+    <loc>https://github.com/dnerini/startleiter/statistics_montegeneroso.html</loc>
+    <lastmod>2023-03-18T20:05:08.646Z</lastmod>
   </url>
   <url>
     <loc>https://github.com/dnerini/startleiter/index.html</loc>
-    <lastmod>2023-03-12T05:19:39.065Z</lastmod>
-  </url>
-  <url>
-    <loc>https://github.com/dnerini/startleiter/site_montelema.html</loc>
-    <lastmod>2023-03-12T05:20:00.845Z</lastmod>
+    <lastmod>2023-03-18T20:05:09.042Z</lastmod>
   </url>
 </urlset>
