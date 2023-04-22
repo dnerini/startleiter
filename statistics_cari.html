@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2023-04-16">
+<meta name="dcterms.date" content="2023-04-22">
 
 <title>Startleiter - Carì</title>
 <style>
@@ -148,6 +148,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
  <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./monitoring.html">
+ <span class="menu-text">Predictions</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="./statistics.html">
  <span class="menu-text">Statistics</span></a>
   </li>  
@@ -166,8 +170,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#last-90-days" id="toc-last-90-days" class="nav-link active" data-scroll-target="#last-90-days">Last 90 days</a></li>
-  <li><a href="#annual-statistics" id="toc-annual-statistics" class="nav-link" data-scroll-target="#annual-statistics">Annual statistics</a></li>
+  <li><a href="#annual-statistics" id="toc-annual-statistics" class="nav-link active" data-scroll-target="#annual-statistics">Annual statistics</a></li>
   <li><a href="#monthly-statistics" id="toc-monthly-statistics" class="nav-link" data-scroll-target="#monthly-statistics">Monthly statistics</a></li>
   </ul>
 </nav>
@@ -189,7 +192,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">April 16, 2023</p>
+      <p class="date">April 22, 2023</p>
     </div>
   </div>
   
@@ -208,137 +211,49 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="cell" data-execution_count="2">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> datetime, timedelta, timezone</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sqlalchemy <span class="im">import</span> create_engine</span>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> datetime, timedelta, timezone</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> startleiter.utils <span class="im">import</span> get_engine, get_flights</span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>db_url <span class="op">=</span> os.environ.get(<span class="st">"DATABASE_URL"</span>)</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>db_url <span class="op">=</span> db_url.replace(<span class="st">"postgres://"</span>, <span class="st">"postgresql://"</span>)</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>engine <span class="op">=</span> create_engine(db_url, echo<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>cols <span class="op">=</span> [<span class="st">"datetime"</span>, <span class="st">"site_id"</span>, <span class="st">"length_km"</span>, <span class="st">"max_altitude_m"</span>, <span class="st">"airtime"</span>, <span class="st">"glider_cat"</span>]</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_sql(<span class="st">"flight"</span>, engine, index_col<span class="op">=</span><span class="st">"id"</span>, columns<span class="op">=</span>cols)</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df[df.site_id<span class="op">==</span>TARGET_SITE_ID].drop(<span class="st">"site_id"</span>, axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"># minimum length: 2 km</span></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df[df.length_km <span class="op">&gt;</span> <span class="dv">2</span>]</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co"># maximum altitude: 5000 m</span></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df[np.logical_or(df.max_altitude_m <span class="op">&lt;</span> <span class="dv">5000</span>, df.max_altitude_m.isna())]</span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co"># minimum altitude: 1000 m</span></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df[np.logical_or(df.max_altitude_m <span class="op">&gt;</span> <span class="dv">1000</span>, df.max_altitude_m.isna())]</span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co"># exclude rigid wings</span></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.drop(df[df.glider_cat <span class="op">==</span> <span class="st">"HGFAI-1 HG"</span>].index)</span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.drop(df[df.glider_cat <span class="op">==</span> <span class="st">"RW5FAI-5 RW"</span>].index)</span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="co"># datetime to date</span></span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"date"</span>] <span class="op">=</span> df.datetime.dt.date</span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="co"># convert airtime to float</span></span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"airtime_hours"</span>] <span class="op">=</span> df[<span class="st">"airtime"</span>] <span class="op">/</span> np.timedelta64(<span class="dv">1</span>, <span class="st">'s'</span>) <span class="op">/</span> <span class="dv">3600</span></span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="co"># no. flights in last 24 hours</span></span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.reset_index().sort_values(<span class="st">"datetime"</span>).set_index(<span class="st">"datetime"</span>)</span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"occurrences_last_24h"</span>] <span class="op">=</span> <span class="dv">1</span></span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"occurrences_last_24h"</span>] <span class="op">=</span> df[<span class="st">"occurrences_last_24h"</span>].rolling(<span class="st">"24H"</span>).<span class="bu">sum</span>()</span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.reset_index().sort_values(<span class="st">"id"</span>).set_index(<span class="st">"id"</span>)</span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="co"># compute the day of the week</span></span>
-<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"dayofweek"</span>] <span class="op">=</span> df.datetime.dt.dayofweek</span>
-<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>mapday <span class="op">=</span> {<span class="dv">0</span>: <span class="st">"Mon"</span>, <span class="dv">1</span>: <span class="st">"Tue"</span>, <span class="dv">2</span>: <span class="st">"Wed"</span>, <span class="dv">3</span>: <span class="st">"Thu"</span>, <span class="dv">4</span>: <span class="st">"Fri"</span>, <span class="dv">5</span>: <span class="st">"Sat"</span>, <span class="dv">6</span>: <span class="st">"Sun"</span>}</span>
-<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"dayofweek"</span>] <span class="op">=</span> df[<span class="st">"dayofweek"</span>].<span class="bu">map</span>(mapday)</span>
-<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="co"># compute the month</span></span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"month"</span>] <span class="op">=</span> df.datetime.dt.month</span>
-<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>mapmonths <span class="op">=</span> {<span class="dv">1</span>:<span class="st">'Jan'</span>, <span class="dv">2</span>:<span class="st">'Feb'</span>, <span class="dv">3</span>:<span class="st">'Mar'</span>, <span class="dv">4</span>:<span class="st">'Apr'</span>, <span class="dv">5</span>:<span class="st">'May'</span>, <span class="dv">6</span>:<span class="st">'Jun'</span>, <span class="dv">7</span>:<span class="st">'Jul'</span>, <span class="dv">8</span>:<span class="st">'Aug'</span>, <span class="dv">9</span>:<span class="st">'Sept'</span>, <span class="dv">10</span>:<span class="st">'Oct'</span>, <span class="dv">11</span>:<span class="st">'Nov'</span>, <span class="dv">12</span>:<span class="st">'Dec'</span>}</span>
-<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"month"</span>] <span class="op">=</span> df[<span class="st">"month"</span>].<span class="bu">map</span>(mapmonths)</span>
-<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="co"># compute the season</span></span>
-<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"season"</span>] <span class="op">=</span> df.datetime.dt.month <span class="op">%</span> <span class="dv">12</span> <span class="op">//</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">1</span></span>
-<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>mapseas <span class="op">=</span> {<span class="dv">1</span>:<span class="st">'DJF'</span>, <span class="dv">2</span>:<span class="st">'MAM'</span>, <span class="dv">3</span>:<span class="st">'JJA'</span>, <span class="dv">4</span>:<span class="st">'SON'</span>}</span>
-<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"season"</span>] <span class="op">=</span> df[<span class="st">"season"</span>].<span class="bu">map</span>(mapseas)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>engine <span class="op">=</span> get_engine()</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> get_flights(engine, TARGET_SITE_ID)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<section id="last-90-days" class="level2">
-<h2 class="anchored" data-anchor-id="last-90-days">Last 90 days</h2>
+<section id="annual-statistics" class="level2">
+<h2 class="anchored" data-anchor-id="annual-statistics">Annual statistics</h2>
 <div class="cell" data-execution_count="3">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>sns.<span class="bu">set</span>()</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># compute reference statistics</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>ts <span class="op">=</span> df.set_index(<span class="st">"datetime"</span>).sort_index()</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>offset_5_years <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span><span class="dv">5</span> <span class="op">*</span> <span class="dv">365</span><span class="sc">}</span><span class="ss">D"</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>clim <span class="op">=</span> ts[[<span class="st">"max_altitude_m"</span>, <span class="st">"length_km"</span>, <span class="st">"airtime_hours"</span>]].resample(<span class="st">"1D"</span>).mean()</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>clim <span class="op">=</span> clim.groupby(clim.index.isocalendar().week)</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>clim <span class="op">=</span> clim.rolling(window<span class="op">=</span>offset_5_years, center<span class="op">=</span><span class="va">False</span>).mean().reset_index(<span class="dv">0</span>, drop<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>clim <span class="op">=</span> clim.sort_index().rolling(<span class="st">"15D"</span>, center<span class="op">=</span><span class="va">True</span>).mean()</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>clim_counts <span class="op">=</span> ts.date.resample(<span class="st">"1D"</span>).count()</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>clim_counts <span class="op">=</span> clim_counts.where(clim_counts <span class="op">&gt;</span> <span class="dv">0</span>)</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>clim_counts <span class="op">=</span> clim_counts.groupby(clim_counts.index.isocalendar().week)</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>clim_counts <span class="op">=</span> clim_counts.rolling(window<span class="op">=</span>offset_5_years, center<span class="op">=</span><span class="va">False</span>).mean().reset_index(<span class="dv">0</span>, drop<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>clim_counts <span class="op">=</span> clim_counts.sort_index().rolling(<span class="st">"15D"</span>, center<span class="op">=</span><span class="va">True</span>).mean()</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>clim <span class="op">=</span> clim[clim.index <span class="op">&gt;</span> datetime.now(timezone.utc) <span class="op">-</span> timedelta(days<span class="op">=</span><span class="dv">90</span>)]</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>clim_counts <span class="op">=</span> clim_counts[clim_counts.index <span class="op">&gt;</span> datetime.now(timezone.utc) <span class="op">-</span> timedelta(days<span class="op">=</span><span class="dv">90</span>)]</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>dfs <span class="op">=</span> df[df.datetime <span class="op">&gt;</span> datetime.now(timezone.utc) <span class="op">-</span> timedelta(days<span class="op">=</span><span class="dv">90</span>)]</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>dfg <span class="op">=</span> dfs.groupby(df.date).datetime.count()</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">4</span>, sharex<span class="op">=</span><span class="va">True</span>, figsize<span class="op">=</span>(<span class="dv">7</span>, <span class="dv">10</span>))</span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="co"># reference lines</span></span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(clim_counts.index, clim_counts.values, color<span class="op">=</span><span class="st">"tab:red"</span>)</span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(clim.index, clim.max_altitude_m, color<span class="op">=</span><span class="st">"tab:red"</span>)</span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">2</span>].plot(clim.index, clim.length_km, color<span class="op">=</span><span class="st">"tab:red"</span>)</span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">3</span>].plot(clim.index, clim.airtime_hours, color<span class="op">=</span><span class="st">"tab:red"</span>)</span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a><span class="co"># plot individual flights</span></span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>ax0 <span class="op">=</span> sns.scatterplot(x<span class="op">=</span>dfg.index, y<span class="op">=</span>dfg.values, marker<span class="op">=</span><span class="st">"x"</span>, ax<span class="op">=</span>axs[<span class="dv">0</span>])</span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>ax1 <span class="op">=</span> sns.scatterplot(x<span class="op">=</span><span class="st">"datetime"</span>, y<span class="op">=</span><span class="st">"max_altitude_m"</span>, marker<span class="op">=</span><span class="st">"x"</span>, data<span class="op">=</span>dfs, ax<span class="op">=</span>axs[<span class="dv">1</span>])</span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>ax2 <span class="op">=</span> sns.scatterplot(x<span class="op">=</span><span class="st">"datetime"</span>, y<span class="op">=</span><span class="st">"length_km"</span>, marker<span class="op">=</span><span class="st">"x"</span>, data<span class="op">=</span>dfs, ax<span class="op">=</span>axs[<span class="dv">2</span>])</span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>ax3 <span class="op">=</span> sns.scatterplot(x<span class="op">=</span><span class="st">"datetime"</span>, y<span class="op">=</span><span class="st">"airtime_hours"</span>, marker<span class="op">=</span><span class="st">"x"</span>, data<span class="op">=</span>dfs, ax<span class="op">=</span>axs[<span class="dv">3</span>])</span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>ax0.<span class="bu">set</span>(ylabel<span class="op">=</span><span class="st">"No. flights per day"</span>)</span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>ax1.<span class="bu">set</span>(ylabel<span class="op">=</span><span class="st">"Max altitude [m]"</span>)</span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>ax2.<span class="bu">set</span>(ylabel<span class="op">=</span><span class="st">"Distance [km]"</span>)</span>
-<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>ax3.<span class="bu">set</span>(ylabel<span class="op">=</span><span class="st">"Airtime [h]"</span>)</span>
-<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>plt.xticks(rotation<span class="op">=</span><span class="dv">30</span>)</span>
-<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-display">
-<div id="fig-past-90-days" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="statistics_cari_files/figure-html/fig-past-90-days-output-1.png" width="655" height="943" class="figure-img"></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;1: Overview over the past 90 days</figcaption><p></p>
-</figure>
-</div>
-</div>
-</div>
-</section>
-<section id="annual-statistics" class="level2">
-<h2 class="anchored" data-anchor-id="annual-statistics">Annual statistics</h2>
-<div class="cell" data-execution_count="4">
-<details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>dfg <span class="op">=</span> df.groupby(df.datetime.dt.year).datetime.count()</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> dfg.plot(kind<span class="op">=</span><span class="st">"bar"</span>, ylabel<span class="op">=</span><span class="st">"No. of flights []"</span>, xlabel<span class="op">=</span><span class="st">"Year"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>dfg <span class="op">=</span> df.groupby(df.datetime.dt.year).datetime.count()</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> dfg.plot(kind<span class="op">=</span><span class="st">"bar"</span>, ylabel<span class="op">=</span><span class="st">"No. of flights []"</span>, xlabel<span class="op">=</span><span class="st">"Year"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
 <div id="fig-counts-by-year" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="statistics_cari_files/figure-html/fig-counts-by-year-output-1.png" width="602" height="460" class="figure-img"></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;2: Total number of flights per year</figcaption><p></p>
+<p><img src="statistics_cari_files/figure-html/fig-counts-by-year-output-1.png" width="593" height="450" class="figure-img"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;1: Total number of flights per year</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell" data-execution_count="4">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>dfg <span class="op">=</span> df.groupby(df.datetime.dt.year).max_altitude_m</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>med <span class="op">=</span> dfg.median()</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>err <span class="op">=</span> (np.<span class="bu">abs</span>(dfg.quantile([<span class="fl">0.1</span>, <span class="fl">0.9</span>]) <span class="op">-</span> med)).unstack()</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> med.plot.bar(yerr<span class="op">=</span>err.values.T, ylabel<span class="op">=</span><span class="st">"Max altitude [masl]"</span>, xlabel<span class="op">=</span><span class="st">"Year"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="fig-altitude-by-year" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="statistics_cari_files/figure-html/fig-altitude-by-year-output-1.png" width="602" height="450" class="figure-img"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;2: Maximum flight altitude per year</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -346,16 +261,16 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="cell" data-execution_count="5">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>dfg <span class="op">=</span> df.groupby(df.datetime.dt.year).max_altitude_m</span>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>dfg <span class="op">=</span> df.groupby(df.datetime.dt.year).length_km</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>med <span class="op">=</span> dfg.median()</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>err <span class="op">=</span> (np.<span class="bu">abs</span>(dfg.quantile([<span class="fl">0.1</span>, <span class="fl">0.9</span>]) <span class="op">-</span> med)).unstack()</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> med.plot.bar(yerr<span class="op">=</span>err.values.T, ylabel<span class="op">=</span><span class="st">"Max altitude [masl]"</span>, xlabel<span class="op">=</span><span class="st">"Year"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> med.plot.bar(yerr<span class="op">=</span>err.values.T, ylabel<span class="op">=</span><span class="st">"Max distance [km]"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
-<div id="fig-altitude-by-year" class="quarto-figure quarto-figure-center anchored">
+<div id="fig-distance-by-year" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="statistics_cari_files/figure-html/fig-altitude-by-year-output-1.png" width="611" height="460" class="figure-img"></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;3: Maximum flight altitude per year</figcaption><p></p>
+<p><img src="statistics_cari_files/figure-html/fig-distance-by-year-output-1.png" width="585" height="450" class="figure-img"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;3: Maximum flight distance per year</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -363,33 +278,16 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="cell" data-execution_count="6">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>dfg <span class="op">=</span> df.groupby(df.datetime.dt.year).length_km</span>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>dfg <span class="op">=</span> df.groupby(df.datetime.dt.year).airtime_hours</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>med <span class="op">=</span> dfg.median()</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>err <span class="op">=</span> (np.<span class="bu">abs</span>(dfg.quantile([<span class="fl">0.1</span>, <span class="fl">0.9</span>]) <span class="op">-</span> med)).unstack()</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> med.plot.bar(yerr<span class="op">=</span>err.values.T, ylabel<span class="op">=</span><span class="st">"Max distance [km]"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-display">
-<div id="fig-distance-by-year" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="statistics_cari_files/figure-html/fig-distance-by-year-output-1.png" width="592" height="460" class="figure-img"></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;4: Maximum flight distance per year</figcaption><p></p>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell" data-execution_count="7">
-<details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>dfg <span class="op">=</span> df.groupby(df.datetime.dt.year).airtime_hours</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>med <span class="op">=</span> dfg.median()</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>err <span class="op">=</span> (np.<span class="bu">abs</span>(dfg.quantile([<span class="fl">0.1</span>, <span class="fl">0.9</span>]) <span class="op">-</span> med)).unstack()</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> med.plot.bar(yerr<span class="op">=</span>err.values.T, ylabel<span class="op">=</span><span class="st">"Max airtime [h]"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> med.plot.bar(yerr<span class="op">=</span>err.values.T, ylabel<span class="op">=</span><span class="st">"Max airtime [h]"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
 <div id="fig-duration-by-year" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="statistics_cari_files/figure-html/fig-duration-by-year-output-1.png" width="583" height="460" class="figure-img"></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;5: Maximum flight duration per year</figcaption><p></p>
+<p><img src="statistics_cari_files/figure-html/fig-duration-by-year-output-1.png" width="576" height="450" class="figure-img"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;4: Maximum flight duration per year</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -397,17 +295,32 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </section>
 <section id="monthly-statistics" class="level2">
 <h2 class="anchored" data-anchor-id="monthly-statistics">Monthly statistics</h2>
-<div class="cell" data-execution_count="8">
+<div class="cell" data-execution_count="7">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>dfg <span class="op">=</span> df.groupby(df.datetime.dt.month).datetime.count()</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> dfg.plot(kind<span class="op">=</span><span class="st">"bar"</span>, ylabel<span class="op">=</span><span class="st">"No. of flights []"</span>, xlabel<span class="op">=</span><span class="st">"Month"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>dfg <span class="op">=</span> df.groupby(df.datetime.dt.month).datetime.count()</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> dfg.plot(kind<span class="op">=</span><span class="st">"bar"</span>, ylabel<span class="op">=</span><span class="st">"No. of flights []"</span>, xlabel<span class="op">=</span><span class="st">"Month"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
 <div id="fig-counts-by-month" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="statistics_cari_files/figure-html/fig-counts-by-month-output-1.png" width="602" height="441" class="figure-img"></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;6: Total number of flights per month</figcaption><p></p>
+<p><img src="statistics_cari_files/figure-html/fig-counts-by-month-output-1.png" width="593" height="433" class="figure-img"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;5: Total number of flights per month</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell" data-execution_count="8">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>months <span class="op">=</span> pd.date_range(<span class="st">"1900-01-01"</span>, <span class="st">"1900-12-01"</span>, freq<span class="op">=</span><span class="st">'MS'</span>).strftime(<span class="st">"%b"</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> sns.catplot(x<span class="op">=</span><span class="st">"month"</span>, y<span class="op">=</span><span class="st">"max_altitude_m"</span>, order<span class="op">=</span>months, data<span class="op">=</span>df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="fig-altitude-by-month" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="statistics_cari_files/figure-html/fig-altitude-by-month-output-1.png" width="470" height="470" class="figure-img"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;6: Maximum flight altitude per month</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -415,13 +328,13 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="cell" data-execution_count="9">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> sns.catplot(x<span class="op">=</span><span class="st">"month"</span>, y<span class="op">=</span><span class="st">"max_altitude_m"</span>, order<span class="op">=</span><span class="bu">list</span>(mapmonths.values()), data<span class="op">=</span>df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> sns.catplot(x<span class="op">=</span><span class="st">"length_km"</span>, y<span class="op">=</span><span class="st">"month"</span>, order<span class="op">=</span>months, data<span class="op">=</span>df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
-<div id="fig-altitude-by-month" class="quarto-figure quarto-figure-center anchored">
+<div id="fig-distance-by-month" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="statistics_cari_files/figure-html/fig-altitude-by-month-output-1.png" width="464" height="464" class="figure-img"></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;7: Maximum flight altitude per month</figcaption><p></p>
+<p><img src="statistics_cari_files/figure-html/fig-distance-by-month-output-1.png" width="471" height="470" class="figure-img"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;7: Maximum flight distance per month</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -429,27 +342,13 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="cell" data-execution_count="10">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> sns.catplot(x<span class="op">=</span><span class="st">"length_km"</span>, y<span class="op">=</span><span class="st">"month"</span>, order<span class="op">=</span><span class="bu">list</span>(mapmonths.values()), data<span class="op">=</span>df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-display">
-<div id="fig-distance-by-month" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="statistics_cari_files/figure-html/fig-distance-by-month-output-1.png" width="461" height="463" class="figure-img"></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;8: Maximum flight distance per month</figcaption><p></p>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell" data-execution_count="11">
-<details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> sns.catplot(x<span class="op">=</span><span class="st">"airtime_hours"</span>, y<span class="op">=</span><span class="st">"month"</span>, order<span class="op">=</span><span class="bu">list</span>(mapmonths.values()), data<span class="op">=</span>df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> sns.catplot(x<span class="op">=</span><span class="st">"airtime_hours"</span>, y<span class="op">=</span><span class="st">"month"</span>, order<span class="op">=</span>months, data<span class="op">=</span>df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
 <div id="fig-duration-by-month" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="statistics_cari_files/figure-html/fig-duration-by-month-output-1.png" width="465" height="463" class="figure-img"></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;9: Maximum flight duration per month</figcaption><p></p>
+<p><img src="statistics_cari_files/figure-html/fig-duration-by-month-output-1.png" width="470" height="470" class="figure-img"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;8: Maximum flight duration per month</figcaption><p></p>
 </figure>
 </div>
 </div>

@@ -10,5 +10,17 @@
       "/statistics_mornera.html",
       "/statistics_santamaria.html"
     ]
+  },
+  {
+    "listing": "/monitoring.html",
+    "items": [
+      "/monitoring_cari.html",
+      "/monitoring_cimetta.html",
+      "/monitoring_montegeneroso.html",
+      "/monitoring_montelema.html",
+      "/monitoring_montetamaro.html",
+      "/monitoring_mornera.html",
+      "/monitoring_santamaria.html"
+    ]
   }
 ]
