@@ -1,0 +1,17 @@
+---
+title: Mornera
+subtitle: 1400 masl
+date: today
+format:
+  html:
+    code-fold: true
+jupyter: python3
+image: "monitoring_mornera_files/figure-html/fig-monitoring-output-1.png"
+
+---
+
+```{python}
+TARGET_SITE_ID = 5
+```
+
+{{< include .compute_monitoring.qmd >}}

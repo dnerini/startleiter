@@ -1,0 +1,8 @@
+---
+title: "Predictions"
+format:
+  html:
+    code-fold: true
+listing:
+    contents: monitoring_*.qmd
+---

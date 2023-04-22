@@ -1,0 +1,17 @@
+---
+title: Monte Tamaro
+subtitle: 1500 masl
+date: today
+format:
+  html:
+    code-fold: true
+jupyter: python3
+image: "monitoring_montetamaro_files/figure-html/fig-monitoring-output-1.png"
+
+---
+
+```{python}
+TARGET_SITE_ID = 3
+```
+
+{{< include .compute_monitoring.qmd >}}
