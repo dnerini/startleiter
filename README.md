@@ -23,7 +23,7 @@ The project consists of the following components:
 - [Data exploration and visualization](https://dnerini.github.io/startleiter/statistics.html).
 - Data preprocessing and feature engineering.
 - Model training and evaluation.
-- [Predictions](https://dnerini.github.io/startleiter/monitporing.htm).
+- [Predictions](https://dnerini.github.io/startleiter/monitoring.htm).
 
 ## Credits and Sources
 
