@@ -31,6 +31,9 @@ jobs:
       - run: pip install jupyter seaborn
       - run: pip install -r requirements.txt
 
+      - name: Install startleiter
+        run: pip install -e .
+
       - name: Debugging
         run: |
           pip list
