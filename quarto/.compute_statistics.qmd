@@ -28,9 +28,12 @@ ax = dfg.plot(kind="bar", ylabel="No. of flights []", xlabel="Year")
 #| fig-cap: Maximum flight altitude per year
 
 dfg = df.groupby(df.datetime.dt.year).max_altitude_m
-med = dfg.median()
-err = (np.abs(dfg.quantile([0.1, 0.9]) - med)).unstack()
-ax = med.plot.bar(yerr=err.values.T, ylabel="Max altitude [masl]", xlabel="Year")
+dmed = dfg.median()
+dmax = dfg.max()
+err = (np.abs(dfg.quantile([0.1, 0.9]) - dmed)).unstack()
+ax = dmed.plot.bar(yerr=err.values.T, ylabel="Max altitude [masl]", xlabel="Year")
+for i, p in enumerate(ax.patches):
+    ax.plot(p.get_center()[0], dmax.iloc[i], marker="*", ls=None, c="C0")
 ```
 
 ```{python}
@@ -38,9 +41,12 @@ ax = med.plot.bar(yerr=err.values.T, ylabel="Max altitude [masl]", xlabel="Year"
 #| fig-cap: Maximum flight distance per year
 
 dfg = df.groupby(df.datetime.dt.year).length_km
-med = dfg.median()
-err = (np.abs(dfg.quantile([0.1, 0.9]) - med)).unstack()
-ax = med.plot.bar(yerr=err.values.T, ylabel="Max distance [km]")
+dmed = dfg.median()
+dmax = dfg.max()
+err = (np.abs(dfg.quantile([0.1, 0.9]) - dmed)).unstack()
+ax = dmed.plot.bar(yerr=err.values.T, ylabel="Max distance [km]")
+for i, p in enumerate(ax.patches):
+    ax.plot(p.get_center()[0], dmax.iloc[i], marker="*", ls=None, c="C0")
 ```
 
 ```{python}
@@ -48,9 +54,12 @@ ax = med.plot.bar(yerr=err.values.T, ylabel="Max distance [km]")
 #| fig-cap: Maximum flight duration per year
 
 dfg = df.groupby(df.datetime.dt.year).airtime_hours
-med = dfg.median()
-err = (np.abs(dfg.quantile([0.1, 0.9]) - med)).unstack()
-ax = med.plot.bar(yerr=err.values.T, ylabel="Max airtime [h]")
+dmed = dfg.median()
+dmax = dfg.max()
+err = (np.abs(dfg.quantile([0.1, 0.9]) - dmed)).unstack()
+ax = dmed.plot.bar(yerr=err.values.T, ylabel="Max airtime [h]")
+for i, p in enumerate(ax.patches):
+    ax.plot(p.get_center()[0], dmax.iloc[i], marker="*", ls=None, c="C0")
 ```
 
 ## Monthly statistics
