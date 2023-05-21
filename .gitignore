@@ -133,6 +133,6 @@ dmypy.json
 .vscode/
 
 # Secrets
-startleiter/config/credentials.toml
+*credentials*
 data/
 notebooks/
