@@ -96,3 +96,27 @@ country = "Switzerland"
 latitude = 46.81
 longitude = 6.95
 elevation = 491.0
+
+[stations."Kloten"]
+name = "KLO"
+long_name = "Zürich / Kloten"
+country = "Switzerland"
+latitude = 47.4796
+longitude = 8.5360
+elevation = 426
+
+[stations."Geneva"]
+name = "GVE"
+long_name = "Genève / Cointrin"
+country = "Switzerland"
+latitude = 46.2475
+longitude = 6.1277
+elevation = 411
+
+[stations."Lugano"]
+name = "LUG"
+long_name = "Lugano"
+country = "Switzerland"
+latitude = 46.0042
+longitude = 8.9603
+elevation = 273

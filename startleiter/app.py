@@ -14,10 +14,10 @@ from fastapi import FastAPI
 from starlette.responses import StreamingResponse, RedirectResponse
 
 from startleiter import config as CFG
-from startleiter import uwyo, rucsoundings
+from startleiter import openmeteo, uwyo, rucsoundings
 from startleiter.decorators import try_wait
 from startleiter.explainer import compute_shap
-from startleiter.plots import explainable_plot, outlook_plot
+from startleiter.plots import explainable_plot
 from startleiter.utils import to_wind_components
 
 LOGGER = logging.getLogger(__name__)
@@ -35,10 +35,11 @@ AVAILABLE_SITES = Literal[
 ]
 
 # note: last bin is open, ie > 1600 m and > 150 km
-ALT_BINS = [0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 2000]
+ALT_BINS = [5, 400, 800, 1200, 1600, 2000, 2400]
 DIST_BINS = [10, 25, 50, 75, 100, 125, 150, 200]
 
 PRESSURE_MIN_hPa = 400
+FILL_NA_VALUE = -5
 
 STATIONS = CFG["stations"]
 
@@ -90,23 +91,49 @@ def parse_time(time: str, leadtime_days) -> tuple[datetime, int, datetime]:
         leadtime_days = 1
     else:
         time = pd.to_datetime(time)
+    leadtime_days = leadtime_days or 0
     if time.date() > datetime.utcnow().date():
         raise ValueError("Argument 'time' cannot be in the future!")
-    validtime = time + timedelta(days=(leadtime_days or 0))
+    if leadtime_days < 0:
+        raise ValueError("Argument 'leadtime_days' cannot be negative!")
+    if leadtime_days > 5:
+        raise ValueError("Cannot predict more than 5 days ahead!")
+    validtime = time + timedelta(days=leadtime_days)
     return time, leadtime_days, validtime
 
 
-@try_wait()
+@try_wait(maxattempts=4)
 def get_last_sounding(station, time):
     data = list(uwyo.scrape(station, time).items())[0]
     return data[0], data[1]["data"]
 
 
-@try_wait()
+@try_wait(maxattempts=4)
 def get_last_sounding_forecast(station, time, leadtime_hrs):
     leadtime = timedelta(hours=leadtime_hrs)
     data = list(rucsoundings.scrape(station, time, leadtime).items())[0]
     return data[0], data[1]["data"]
+
+
+def get_last_pressure_diff_forecast(time: datetime, leadtime_days: int):
+    qff_klo = openmeteo.scrape("Kloten", "pressure_msl")
+    qff_lug = openmeteo.scrape("Geneva", "pressure_msl")
+    qff_gve = openmeteo.scrape("Lugano", "pressure_msl")
+    qff_diff_gve = qff_klo - qff_gve
+    qff_diff_gve = qff_diff_gve.rename(columns={"pressure_msl": "KLO-GVE"})
+    qff_diff_lug = qff_klo - qff_lug
+    qff_diff_lug = qff_diff_lug.rename(columns={"pressure_msl": "KLO-LUG"})
+    time = time.replace(minute=0, second=0, microsecond=0)
+    time_idx = pd.date_range(
+        time + pd.Timedelta(hours=1),
+        time + pd.Timedelta(days=leadtime_days),
+        freq="1H",
+    )
+    qff_diff_gve = qff_diff_gve.loc[time_idx]
+    qff_diff_lug = qff_diff_lug.loc[time_idx]
+    qff_diff = pd.concat((qff_diff_gve, qff_diff_lug), axis=1)
+    assert qff_diff.shape[0] == leadtime_days * 24
+    return qff_diff.to_xarray().rename({"index": "date"})
 
 
 def extract_features(ds):
@@ -115,14 +142,7 @@ def extract_features(ds):
     ds["DWPD"] = ds["TEMP"] - ds["DWPT"]
     ds["WOY"] = ds.attrs["validtime"].isocalendar().week
     (ds,) = xr.broadcast(ds)
-    return (
-        ds[["TEMP", "DWPD", "U", "V", "WOY"]]
-        .rename({"PRES": "level"})
-        .bfill(dim="level", limit=3)
-        .to_array()
-        .transpose("level", "variable")
-        .astype("float32")
-    )
+    return ds[["TEMP", "DWPD", "U", "V", "WOY"]].rename({"PRES": "level"})
 
 
 def standardize(da, moments, inverse=False):
@@ -133,13 +153,12 @@ def standardize(da, moments, inverse=False):
         return da * moments.sigma + moments.mu
 
 
-@lru_cache(maxsize=1)
 def get_sounding(station: str, time: datetime, leadtime_days: int) -> xr.Dataset:
     """Get the input data"""
     time = time.replace(hour=0, minute=0, second=0, microsecond=0)
     LOGGER.info(f"Time: {time}")
     station = STATIONS[station]
-    if leadtime_days is not None and leadtime_days > 0:
+    if leadtime_days > 0:
         validtime, sounding = get_last_sounding_forecast(
             station["name"], time, leadtime_hrs=int(leadtime_days) * 24
         )
@@ -153,25 +172,46 @@ def get_sounding(station: str, time: datetime, leadtime_days: int) -> xr.Dataset
     return sounding
 
 
-def preprocess(sounding, site, moments):
+def get_surface(time: datetime, leadtime_days: int) -> xr.Dataset:
+    time = time.replace(hour=0, minute=0, second=0, microsecond=0)
+    leadtime_days = leadtime_days or 0
+    time += pd.Timedelta(days=leadtime_days)
+    surface = get_last_pressure_diff_forecast(time, leadtime_days=1)
+    return surface
+
+
+def get_features(time, leadtime_days):
+    features = get_sounding("Cameri", time, leadtime_days)
+    surface = get_surface(time, leadtime_days)
+    surface = surface.pad(
+        date=(0, features.sizes["level"] - surface.sizes["date"]),
+        constant_values=np.nan,
+    )
+    surface = surface.rename({"date": "level"}).drop("level")
+    features = features.merge(surface)
+    return features.to_array().transpose("level", "variable").astype("float32")
+
+
+def preprocess(features, site, moments):
     """Preprocess inputs"""
-    inputs_sounding = standardize(sounding, moments)
+    inputs_features = standardize(features, moments)
+    inputs_features = inputs_features.fillna(FILL_NA_VALUE)
     inputs_embedding = xr.DataArray(
         np.ones((1, 1)) * SITE_IDS[site],
         dims=("validtime", "variable"),
         coords={"variable": ["ID"]},
     )
-    return xr.concat((inputs_sounding, inputs_embedding), "variable")
+    return xr.concat((inputs_features, inputs_embedding), "variable")
 
 
-@lru_cache(maxsize=50)
+@lru_cache(maxsize=42)
 def predict(site: str, time: datetime, leadtime_days: int):
     """Predict flyability, max altitude and max distance."""
 
-    sounding = get_sounding("Cameri", time, leadtime_days)
+    features = get_features(time, leadtime_days)
 
     # flyability
-    inputs = preprocess(sounding, site, MOMENTS_FLYABILITY)
+    inputs = preprocess(features, site, MOMENTS_FLYABILITY)
     fly_prob = float(MODEL_FLYABILITY.predict(inputs.values[None, ..., 0])[0][0])
     fly_prob = float(FLYABILITY_CALIBRATION_CURVE.predict([fly_prob]))
 
@@ -180,12 +220,11 @@ def predict(site: str, time: datetime, leadtime_days: int):
         max_alt_gain = 0
         max_dist = 0
     else:
-        sounding = sounding.sel(level=slice(1000, 400))
-        inputs = preprocess(sounding, site, MOMENTS_MAX_ALT)
+        inputs = preprocess(features, site, MOMENTS_MAX_ALT)
         max_alt_gain = ALT_BINS[
             int(MODEL_MAX_ALT.predict(inputs.values[None, ..., 0])[0].argmax())
         ]
-        inputs = preprocess(sounding, site, MOMENTS_MAX_DIST)
+        inputs = preprocess(features, site, MOMENTS_MAX_DIST)
         max_dist = DIST_BINS[
             int(MODEL_MAX_DIST.predict(inputs.values[None, ..., 0])[0].argmax())
         ]
@@ -195,9 +234,24 @@ def predict(site: str, time: datetime, leadtime_days: int):
     return fly_prob, max_alt, max_dist
 
 
-def explain(site: str, sounding: xr.Dataset):
-    inputs = preprocess(sounding, site, MOMENTS_FLYABILITY)
-    return compute_shap(BACKGROUND, MODEL_FLYABILITY, inputs.values[None, ..., 0])[0]
+@lru_cache(maxsize=21)
+def explain(site: str, time: datetime, leadtime_days: int):
+    fly_prob, max_alt, max_dist = predict(site, time, leadtime_days)
+    features = get_features(time, leadtime_days)
+    inputs = preprocess(features, site, MOMENTS_FLYABILITY)
+    shap_values = compute_shap(
+        BACKGROUND, MODEL_FLYABILITY, inputs.values[None, ..., 0]
+    )[0]
+    fig = explainable_plot(
+        SITES[site],
+        features,
+        shap_values,
+        fly_prob,
+        max_alt,
+        max_dist,
+        min_pressure_hPa=PRESSURE_MIN_hPa,
+    )
+    return fig
 
 
 @app.get("/site")
@@ -227,47 +281,9 @@ async def plot_site(
     leadtime_days: Optional[int] = None,
 ):
     time, leadtime_days, _ = parse_time(time, leadtime_days)
-    sounding = get_sounding("Cameri", time, leadtime_days)
-    fly_prob, max_alt, max_dist = predict(site, time, leadtime_days)
-    shap_values = explain(site, sounding)
 
-    fig = explainable_plot(
-        SITES[site],
-        sounding,
-        shap_values,
-        fly_prob,
-        max_alt,
-        max_dist,
-        min_pressure_hPa=400,
-    )
-    image_file = BytesIO()
-    plt.savefig(image_file)
-    plt.close(fig)
-    image_file.seek(0)
-    return StreamingResponse(image_file, media_type="image/png")
+    fig = explain(site, time, leadtime_days)
 
-
-@app.get("/site_outlook")
-async def outlook_site(site: AVAILABLE_SITES = "Cimetta"):
-    validtimes = []
-    fly_probs = []
-    max_alts = []
-    max_dists = []
-    time = datetime.utcnow()
-    fly_prob, max_alt, max_dist = predict(site, time, None)
-    validtimes.append(time)
-    fly_probs.append(fly_prob)
-    max_alts.append(max_alt)
-    max_dists.append(max_dist)
-    for leadtime_days in range(1, 9):
-        print(leadtime_days)
-        validtime = time + timedelta(days=leadtime_days)
-        fly_prob, max_alt, max_dist = predict(site, time, leadtime_days)
-        validtimes.append(validtime)
-        fly_probs.append(fly_prob)
-        max_alts.append(max_alt)
-        max_dists.append(max_dist)
-    fig = outlook_plot(site, validtimes, fly_probs, max_alts, max_dists)
     image_file = BytesIO()
     plt.savefig(image_file)
     plt.close(fig)

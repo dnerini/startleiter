@@ -29,7 +29,7 @@ def main(sites):
     reftime = datetime.today().date()
 
     n = 0
-    for day in range(9):
+    for day in range(5):
         predictions = []
         LOGGER.info(f"Day: {day}")
         for site_name, site in sites:
@@ -66,7 +66,6 @@ def main(sites):
 
 
 if __name__ == "__main__":
-
     logging.basicConfig(
         # format="%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s",
         format="%(levelname)-4s [%(filename)s:%(lineno)d] %(message)s",

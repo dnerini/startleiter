@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import numpy as np
 import pandas as pd
@@ -88,8 +88,10 @@ def scrape(station_name, date_start, leadtime):
     validtime = date_start + leadtime
     this_query = {
         "airport": station_name,
-        "startSecs": int(date_start.timestamp()),
-        "endSecs": int((date_start + timedelta(hours=3)).timestamp()),
+        "startSecs": int(date_start.replace(tzinfo=timezone.utc).timestamp()),
+        "endSecs": int(
+            (date_start + timedelta(hours=3)).replace(tzinfo=timezone.utc).timestamp()
+        ),
         "fcst_len": int(leadtime.total_seconds() / 3600),
     }
     query_url = scr.build_query(SEARCH_URL, DEFAULT_QUERY, this_query)
@@ -129,7 +131,6 @@ def scrape(station_name, date_start, leadtime):
 
 
 if __name__ == "__main__":
-
     source = CFG["sources"]["rucsoundings"]
     station = CFG["stations"]["Milano"]
     leadtime = timedelta(hours=120)

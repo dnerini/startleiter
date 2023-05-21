@@ -34,14 +34,15 @@ Input: {source}"""
 
 
 def explainable_plot(
-    site, sounding, shap_values, flyability, max_alt_m, max_dist_km, min_pressure_hPa
+    site, features, shap_values, flyability, max_alt_m, max_dist_km, min_pressure_hPa
 ):
+    features = features.bfill(dim="level", limit=3)
     # Assign units
-    p = sounding.level.values * units.hPa
-    T = sounding.sel(variable="TEMP").values * units.degC
-    Td = (T.magnitude - sounding.sel(variable="DWPD").values) * units.degC
-    U = sounding.sel(variable="U").values * units.knots
-    V = sounding.sel(variable="V").values * units.knots
+    p = features.level.values * units.hPa
+    T = features.sel(variable="TEMP").values * units.degC
+    Td = (T.magnitude - features.sel(variable="DWPD").values) * units.degC
+    U = features.sel(variable="U").values * units.knots
+    V = features.sel(variable="V").values * units.knots
 
     fig = plt.figure(figsize=(4.5, 5.5), dpi=300)
     skew = SkewT(fig, rotation=45, aspect=100)
@@ -49,8 +50,8 @@ def explainable_plot(
     # SHAP values
     shval = shap_values[0, :, :]
     # split DWPD between TEMP and DWPT
-    shval[:, 0] += shval[:, 1] / 2
-    shval[:, 1] /= 2
+    # shval[:, 0] += shval[:, 1] / 2
+    # shval[:, 1] /= 2
     shmax = np.quantile(np.abs(shval), 0.98)
     shval /= shmax
     shval = np.clip(shval, -1, 1)
@@ -135,8 +136,8 @@ def explainable_plot(
         ha="center",
         fontsize="xx-small",
     )
-    validtime = f"{sounding.attrs['validtime']:%Y-%m-%d}"
-    source = f"{sounding.attrs['source']}"
+    validtime = f"{features.attrs['validtime']:%Y-%m-%d}"
+    source = f"{features.attrs['source']}"
     skew.ax.text(
         0,
         1.05,

@@ -8,6 +8,10 @@ import pandas as pd
 from sqlalchemy import create_engine
 
 
+# silence invalid value warning
+np.seterr(invalid="ignore")
+
+
 def get_engine():
     db_url = os.environ.get("DATABASE_URL")
     db_url = db_url.replace("postgres://", "postgresql://")

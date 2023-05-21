@@ -165,7 +165,6 @@ def parse_flights(browser, pace):
     consecutive_timeouts = 0
     flights_data = []
     for n, flight in enumerate(flights):
-
         flight_data = []
 
         # Parse flight summary
@@ -333,7 +332,6 @@ def main(site, pace):
 
 
 if __name__ == "__main__":
-
     logging.basicConfig(
         # format="%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s",
         format="%(levelname)-4s [%(filename)s:%(lineno)d] %(message)s",
