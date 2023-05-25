@@ -57,7 +57,7 @@ axs[0].plot(clim_counts.index, clim_counts.values, color="tab:red")
 axs[1].plot(clim.index, clim.max_altitude_m, color="tab:red")
 axs[2].plot(clim.index, clim.length_km, color="tab:red")
 axs[3].plot(clim.index, clim.airtime_hours, color="tab:red")
-axs[3].tick_params(labelrotation=45)
+axs[3].tick_params(axis="x", labelrotation=45)
 
 # predictions
 pred = df_pred[df_pred.leadtime_days==0].set_index("validtime").sort_index()
