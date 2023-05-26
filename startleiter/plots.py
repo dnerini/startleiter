@@ -129,12 +129,12 @@ def explainable_plot(
     norm = mpl.colors.Normalize(vmin=-1, vmax=1)
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
-    cbaxes = fig.add_axes([0.65, 0.45, 0.015, 0.1])
+    cbaxes = fig.add_axes([0.67, 0.465, 0.015, 0.1])
     cbar = plt.colorbar(sm, cax=cbaxes)
     cbar.set_ticks([])
     cbar.ax.text(
         0.5,
-        1.0,
+        1.05,
         "Favourable",
         transform=cbar.ax.transAxes,
         va="bottom",
@@ -143,7 +143,7 @@ def explainable_plot(
     )
     cbar.ax.text(
         0.5,
-        -0.01,
+        -0.05,
         "Adverse",
         transform=cbar.ax.transAxes,
         va="top",
@@ -211,15 +211,20 @@ def explainable_plot(
         )
 
     ax2.hlines(0, tt.min(), tt.max(), ls=":", color="black")
-    ax2.set_ylim([-15, 15])
+    ylim_min = min(0, np.min(QFF_KG[:24].magnitude)) - 2
+    ylim_max = max(0, np.max(QFF_KG[:24].magnitude)) + 2
+    ax2.set_ylim([ylim_min, ylim_max])
     ax2.set_xlim([tt.min(), tt.max()])
     ax2.set_ylabel(
         "KLO-GVE [hPa]",
         fontsize="small",
     )
     ax2.set_xticklabels([])
+
     ax3.hlines(0, tt.min(), tt.max(), ls=":", color="black")
-    ax3.set_ylim([-15, 15])
+    ylim_min = min(0, np.min(QFF_KL[:24].magnitude)) - 2
+    ylim_max = max(0, np.max(QFF_KL[:24].magnitude)) + 2
+    ax3.set_ylim([ylim_min, ylim_max])
     ax3.set_xlim([tt.min(), tt.max()])
     ax3.set_ylabel(
         "KLO-LUG [hPa]",
