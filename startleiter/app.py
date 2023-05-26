@@ -117,8 +117,8 @@ def get_last_sounding_forecast(station, time, leadtime_hrs):
 
 def get_last_pressure_diff_forecast(time: datetime, leadtime_days: int):
     qff_klo = openmeteo.scrape("Kloten", "pressure_msl")
-    qff_lug = openmeteo.scrape("Geneva", "pressure_msl")
-    qff_gve = openmeteo.scrape("Lugano", "pressure_msl")
+    qff_lug = openmeteo.scrape("Lugano", "pressure_msl")
+    qff_gve = openmeteo.scrape("Geneva", "pressure_msl")
     qff_diff_gve = qff_klo - qff_gve
     qff_diff_gve = qff_diff_gve.rename(columns={"pressure_msl": "KLO-GVE"})
     qff_diff_lug = qff_klo - qff_lug
@@ -177,7 +177,7 @@ def get_surface(time: datetime, leadtime_days: int) -> xr.Dataset:
     leadtime_days = leadtime_days or 0
     time += pd.Timedelta(days=leadtime_days)
     surface = get_last_pressure_diff_forecast(time, leadtime_days=1)
-    return surface
+    return surface[["KLO-GVE", "KLO-LUG"]]
 
 
 def get_features(time, leadtime_days):
