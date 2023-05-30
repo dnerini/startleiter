@@ -35,6 +35,7 @@ AVAILABLE_SITES = Literal[
 ]
 
 # note: last bin is open, ie > 1600 m and > 150 km
+POSITIVE_LABEL = 0
 ALT_BINS = [5, 400, 800, 1200, 1600, 2000, 2400]
 DIST_BINS = [10, 25, 50, 75, 100, 125, 150, 200]
 
@@ -68,7 +69,7 @@ MOMENTS_MAX_DIST = xr.load_dataset("models/fly_max_dist_moments.nc")
 
 BACKGROUND = np.load("models/flyability_background.npy")
 
-FLY_PROB_THR = 0.1
+FLY_PROB_THR = 0.2
 
 
 @app.get("/", include_in_schema=False)
@@ -214,6 +215,8 @@ def predict(site: str, time: datetime, leadtime_days: int):
     inputs = preprocess(features, site, MOMENTS_FLYABILITY)
     fly_prob = float(MODEL_FLYABILITY.predict(inputs.values[None, ..., 0])[0][0])
     fly_prob = float(FLYABILITY_CALIBRATION_CURVE.predict([fly_prob]))
+    if POSITIVE_LABEL == 0:
+        fly_prob = 1 - fly_prob
 
     # max altitude and distance
     if fly_prob < FLY_PROB_THR:
@@ -242,8 +245,12 @@ def explain(site: str, time: datetime, leadtime_days: int):
     shap_values = compute_shap(
         BACKGROUND, MODEL_FLYABILITY, inputs.values[None, ..., 0]
     )[0]
+    if POSITIVE_LABEL == 0:
+        shap_values *= -1
     fig = explainable_plot(
         SITES[site],
+        time,
+        leadtime_days,
         features,
         shap_values,
         fly_prob,
