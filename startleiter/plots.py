@@ -27,25 +27,33 @@ def text_validtime(validtime):
 {validtime}"""
 
 
-def text_plot(site, validtime, flyability, max_alt_m, max_dist_km, source):
+def text_plot(
+    site, reftime, leadtime, validtime, flyability, max_alt_m, max_dist_km, source
+):
     return f"""
 {site['name']}, Switzerland ({site['elevation']} masl)
-{validtime}
+{reftime} +{leadtime}h ({validtime})
 
 Flyability: {flyability * 100:.0f}%
 Max flying height: {max_alt_m} m
 Max flying distance: {max_dist_km} km
 
-Profile:
+Features:
 {source}
-
-QFF gradients:
-DWD-ICON
+DWD-ICON QFF gradients
 """
 
 
 def explainable_plot(
-    site, features, shap_values, flyability, max_alt_m, max_dist_km, min_pressure_hPa
+    site,
+    reftime,
+    leadtime_days,
+    features,
+    shap_values,
+    flyability,
+    max_alt_m,
+    max_dist_km,
+    min_pressure_hPa,
 ):
     features = features.bfill(dim="level", limit=3)
     # Assign units
@@ -150,7 +158,9 @@ def explainable_plot(
         ha="center",
         fontsize="x-small",
     )
-    validtime = f"{features.attrs['validtime']:%Y-%m-%d}"
+    reftime = f"{reftime:%Y-%m-%d}"
+    leadtime = f"{leadtime_days * 24:02d}"
+    validtime = f"{features.attrs['validtime']:%a %d %b}"
     source = f"{features.attrs['source']}"
     ax1.text(
         0,
@@ -166,7 +176,16 @@ def explainable_plot(
     ax1.text(
         0,
         1,
-        text_plot(site, validtime, flyability, max_alt_m, max_dist_km, source),
+        text_plot(
+            site,
+            reftime,
+            leadtime,
+            validtime,
+            flyability,
+            max_alt_m,
+            max_dist_km,
+            source,
+        ),
         fontsize="small",
         stretch="condensed",
         linespacing=1.1,
@@ -177,7 +196,7 @@ def explainable_plot(
 
     ax1.axis("off")
 
-    tt = pd.date_range(validtime, periods=24, freq="1H")
+    tt = pd.date_range(features.attrs["validtime"], periods=24, freq="1H")
     ax2.plot(tt, QFF_KG[:24], "k-")
     ax3.plot(tt, QFF_KL[:24], "k-")
     for i in range(len(tt) - 1):
@@ -216,7 +235,7 @@ def explainable_plot(
     ax2.set_ylim([ylim_min, ylim_max])
     ax2.set_xlim([tt.min(), tt.max()])
     ax2.set_ylabel(
-        "KLO-GVE [hPa]",
+        "KLO-GVE (hPa)",
         fontsize="small",
     )
     ax2.set_xticklabels([])
@@ -227,11 +246,12 @@ def explainable_plot(
     ax3.set_ylim([ylim_min, ylim_max])
     ax3.set_xlim([tt.min(), tt.max()])
     ax3.set_ylabel(
-        "KLO-LUG [hPa]",
+        "KLO-LUG (hPa)",
         fontsize="small",
     )
-    ax3.tick_params(axis="x", labelrotation=45, labelsize="small")
-    ax3.xaxis.set_major_formatter(DateFormatter("%a %H"))
+    ax3.tick_params(labelsize="small")
+    ax3.xaxis.set_major_formatter(DateFormatter("%H"))
+    ax3.set_xlabel("Hour of day (UTC)", fontsize="small")
 
     plt.tight_layout()
 
