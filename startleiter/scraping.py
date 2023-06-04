@@ -16,8 +16,8 @@ def launch_browser():
     browser = webdriver.Firefox(
         options=options,
     )
-    browser.set_page_load_timeout(10)
-    browser.set_script_timeout(10)
+    browser.set_page_load_timeout(15)
+    browser.set_script_timeout(15)
     return browser
 
 
