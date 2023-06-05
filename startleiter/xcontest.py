@@ -10,6 +10,7 @@ from selenium.common.exceptions import (
     TimeoutException,
     StaleElementReferenceException,
     WebDriverException,
+    NoSuchElementException,
 )
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -53,6 +54,12 @@ def login_xcontest(browser):
     browser.find_element(By.ID, "login-username").send_keys(username)
     browser.find_element(By.ID, "login-password").send_keys(password)
     browser.find_element(By.CLASS_NAME, "submit").submit()
+    try:
+        browser.find_element(By.XPATH, "//input[@class='submit short' and @value='Storno']").click()
+    except NoSuchElementException:
+        pass
+    else:
+        browser.click()
     time.sleep(3)
     return browser
 
@@ -307,6 +314,9 @@ def main(site, pace):
             query_url = scr.build_query(SEARCH_URL, DEFAULT_QUERY, this_query)
             LOGGER.info(query_url)
             browser.get(query_url)
+            wait = WebDriverWait(browser, 30)
+            wait.until(EC.title_contains("Worldwide flights search"))
+
             flight_chunk = parse_flights(browser, pace)
             if flight_chunk:
                 db.add_all(
