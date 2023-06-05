@@ -21,7 +21,7 @@ jobs:
           python-version: 3.9
 
       - name: Create conda environment
-        uses: uses: mamba-org/setup-micromamba@v1
+        uses: mamba-org/setup-micromamba@v1
         with:
           environment-file: envs/scrape.yaml
           cache-environment: true
