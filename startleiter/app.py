@@ -103,13 +103,13 @@ def parse_time(time: str, leadtime_days) -> tuple[datetime, int, datetime]:
     return time, leadtime_days, validtime
 
 
-@try_wait(maxattempts=4)
+@try_wait(maxattempts=3)
 def get_last_sounding(station, time):
     data = list(uwyo.scrape(station, time).items())[0]
     return data[0], data[1]["data"]
 
 
-@try_wait(maxattempts=4)
+@try_wait(maxattempts=3)
 def get_last_sounding_forecast(station, time, leadtime_hrs):
     leadtime = timedelta(hours=leadtime_hrs)
     data = list(rucsoundings.scrape(station, time, leadtime).items())[0]
@@ -165,8 +165,16 @@ def get_sounding(station: str, time: datetime, leadtime_days: int) -> xr.Dataset
         )
         sounding.attrs["source"] = f"GFS sounding +{leadtime_days * 24:.0f} h"
     else:
-        validtime, sounding = get_last_sounding(station["stid"], time)
-        sounding.attrs["source"] = f"Radiosounding 00Z {station['long_name']}"
+        try:
+            validtime, sounding = get_last_sounding(station["stid"], time)
+        except IndexError:
+            LOGGER.error("radiosounding not available, using forecast data")
+            validtime, sounding = get_last_sounding_forecast(
+                station["name"], time, leadtime_hrs=0
+            )
+            sounding.attrs["source"] = "GFS sounding +0 h"
+        else:
+            sounding.attrs["source"] = f"Radiosounding 00Z {station['long_name']}"
     sounding.attrs["validtime"] = validtime
     sounding = extract_features(sounding)
     sounding = sounding.sel(level=slice(1000, PRESSURE_MIN_hPa))
