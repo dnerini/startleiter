@@ -1,17 +1,5 @@
 [
   {
-    "listing": "/statistics.html",
-    "items": [
-      "/statistics_cari.html",
-      "/statistics_cimetta.html",
-      "/statistics_montegeneroso.html",
-      "/statistics_montelema.html",
-      "/statistics_montetamaro.html",
-      "/statistics_mornera.html",
-      "/statistics_santamaria.html"
-    ]
-  },
-  {
     "listing": "/monitoring.html",
     "items": [
       "/monitoring_cari.html",
@@ -21,6 +9,18 @@
       "/monitoring_montetamaro.html",
       "/monitoring_mornera.html",
       "/monitoring_santamaria.html"
+    ]
+  },
+  {
+    "listing": "/statistics.html",
+    "items": [
+      "/statistics_cari.html",
+      "/statistics_cimetta.html",
+      "/statistics_montegeneroso.html",
+      "/statistics_montelema.html",
+      "/statistics_montetamaro.html",
+      "/statistics_mornera.html",
+      "/statistics_santamaria.html"
     ]
   }
 ]
