@@ -282,42 +282,49 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>clim_counts <span class="op">=</span> clim_counts.rolling(window<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>n_years <span class="op">*</span> <span class="dv">365</span><span class="sc">}</span><span class="ss">D"</span>, center<span class="op">=</span><span class="va">False</span>).mean().reset_index(<span class="dv">0</span>, drop<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>clim_counts <span class="op">=</span> clim_counts.sort_index().rolling(<span class="st">"20D"</span>, center<span class="op">=</span><span class="va">True</span>).mean()</span>
 <span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>clim <span class="op">=</span> clim[clim.index <span class="op">&gt;</span> datetime.now(timezone.utc) <span class="op">-</span> timedelta(days<span class="op">=</span><span class="dv">90</span>)]</span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>clim_counts <span class="op">=</span> clim_counts[clim_counts.index <span class="op">&gt;</span> datetime.now(timezone.utc) <span class="op">-</span> timedelta(days<span class="op">=</span><span class="dv">90</span>)]</span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>dfs <span class="op">=</span> df_flight[df_flight.datetime <span class="op">&gt;</span> datetime.now(timezone.utc) <span class="op">-</span> timedelta(days<span class="op">=</span><span class="dv">90</span>)]</span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>dfg <span class="op">=</span> dfs.groupby(df_flight.date).datetime.count()</span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">4</span>, sharex<span class="op">=</span><span class="va">True</span>, figsize<span class="op">=</span>(<span class="dv">7</span>, <span class="dv">10</span>))</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>end <span class="op">=</span> datetime.now(timezone.utc)</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>start <span class="op">=</span> end <span class="op">-</span> timedelta(days<span class="op">=</span><span class="dv">90</span>)</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>clim <span class="op">=</span> clim[clim.index <span class="op">&gt;</span> start]</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>clim_counts <span class="op">=</span> clim_counts[clim_counts.index <span class="op">&gt;</span> start]</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>dfs <span class="op">=</span> df_flight[df_flight.datetime <span class="op">&gt;</span> start]</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>dfg <span class="op">=</span> dfs.groupby(df_flight.date).datetime.count()</span>
 <span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="co"># reference lines</span></span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(clim_counts.index, clim_counts.values, color<span class="op">=</span><span class="st">"tab:red"</span>)</span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(clim.index, clim.max_altitude_m, color<span class="op">=</span><span class="st">"tab:red"</span>)</span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">2</span>].plot(clim.index, clim.length_km, color<span class="op">=</span><span class="st">"tab:red"</span>)</span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">3</span>].plot(clim.index, clim.airtime_hours, color<span class="op">=</span><span class="st">"tab:red"</span>)</span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">3</span>].tick_params(axis<span class="op">=</span><span class="st">"x"</span>, labelrotation<span class="op">=</span><span class="dv">45</span>)</span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="co"># predictions</span></span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>pred <span class="op">=</span> df_pred[df_pred.leadtime_days<span class="op">==</span><span class="dv">0</span>].set_index(<span class="st">"validtime"</span>).sort_index()</span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].twinx().step(pred.index, pred.flying_probability, color<span class="op">=</span><span class="st">"gray"</span>, alpha<span class="op">=</span><span class="fl">0.5</span>)</span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>twinx <span class="op">=</span> plt.gca()</span>
-<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>twinx.grid(<span class="va">None</span>)</span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>twinx.set_ylim([<span class="dv">0</span>, <span class="dv">1</span>])</span>
-<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>twinx.set_ylabel(<span class="st">"Flyability []"</span>)</span>
-<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].step(pred.index, pred.max_altitude_masl, color<span class="op">=</span><span class="st">"gray"</span>, alpha<span class="op">=</span><span class="fl">0.5</span>)</span>
-<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">2</span>].step(pred.index, pred.max_distance_km, color<span class="op">=</span><span class="st">"gray"</span>, alpha<span class="op">=</span><span class="fl">0.5</span>)</span>
-<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a><span class="co"># plot individual flights</span></span>
-<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>ax0 <span class="op">=</span> sns.scatterplot(x<span class="op">=</span>dfg.index, y<span class="op">=</span>dfg.values, marker<span class="op">=</span><span class="st">"x"</span>, ax<span class="op">=</span>axs[<span class="dv">0</span>])</span>
-<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>ax1 <span class="op">=</span> sns.scatterplot(x<span class="op">=</span><span class="st">"datetime"</span>, y<span class="op">=</span><span class="st">"max_altitude_m"</span>, marker<span class="op">=</span><span class="st">"x"</span>, data<span class="op">=</span>dfs, ax<span class="op">=</span>axs[<span class="dv">1</span>])</span>
-<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>ax2 <span class="op">=</span> sns.scatterplot(x<span class="op">=</span><span class="st">"datetime"</span>, y<span class="op">=</span><span class="st">"length_km"</span>, marker<span class="op">=</span><span class="st">"x"</span>, data<span class="op">=</span>dfs, ax<span class="op">=</span>axs[<span class="dv">2</span>])</span>
-<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>ax3 <span class="op">=</span> sns.scatterplot(x<span class="op">=</span><span class="st">"datetime"</span>, y<span class="op">=</span><span class="st">"airtime_hours"</span>, marker<span class="op">=</span><span class="st">"x"</span>, data<span class="op">=</span>dfs, ax<span class="op">=</span>axs[<span class="dv">3</span>])</span>
-<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>ax0.<span class="bu">set</span>(ylabel<span class="op">=</span><span class="st">"No. flights per day"</span>)</span>
-<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>ax1.<span class="bu">set</span>(ylabel<span class="op">=</span><span class="st">"Max altitude [m]"</span>)</span>
-<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>ax2.<span class="bu">set</span>(ylabel<span class="op">=</span><span class="st">"Distance [km]"</span>)</span>
-<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>ax3.<span class="bu">set</span>(ylabel<span class="op">=</span><span class="st">"Airtime [h]"</span>)</span>
-<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">4</span>, sharex<span class="op">=</span><span class="va">True</span>, figsize<span class="op">=</span>(<span class="dv">7</span>, <span class="dv">10</span>))</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="co"># reference lines</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(clim_counts.index, clim_counts.values, color<span class="op">=</span><span class="st">"tab:red"</span>)</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(clim.index, clim.max_altitude_m, color<span class="op">=</span><span class="st">"tab:red"</span>)</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">2</span>].plot(clim.index, clim.length_km, color<span class="op">=</span><span class="st">"tab:red"</span>)</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">3</span>].plot(clim.index, clim.airtime_hours, color<span class="op">=</span><span class="st">"tab:red"</span>)</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">3</span>].tick_params(axis<span class="op">=</span><span class="st">"x"</span>, labelrotation<span class="op">=</span><span class="dv">45</span>)</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="co"># predictions</span></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>pred <span class="op">=</span> df_pred[df_pred.leadtime_days<span class="op">==</span><span class="dv">0</span>].set_index(<span class="st">"validtime"</span>).sort_index()</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].twinx().step(pred.index, pred.flying_probability, color<span class="op">=</span><span class="st">"gray"</span>, alpha<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>twinx <span class="op">=</span> plt.gca()</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>twinx.grid(<span class="va">None</span>)</span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>twinx.set_ylim([<span class="dv">0</span>, <span class="dv">1</span>])</span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>twinx.set_ylabel(<span class="st">"Flyability []"</span>)</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].step(pred.index, pred.max_altitude_masl, color<span class="op">=</span><span class="st">"gray"</span>, alpha<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">2</span>].step(pred.index, pred.max_distance_km, color<span class="op">=</span><span class="st">"gray"</span>, alpha<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a><span class="co"># plot individual flights</span></span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>ax0 <span class="op">=</span> sns.scatterplot(x<span class="op">=</span>dfg.index, y<span class="op">=</span>dfg.values, marker<span class="op">=</span><span class="st">"x"</span>, ax<span class="op">=</span>axs[<span class="dv">0</span>])</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>ax1 <span class="op">=</span> sns.scatterplot(x<span class="op">=</span><span class="st">"datetime"</span>, y<span class="op">=</span><span class="st">"max_altitude_m"</span>, marker<span class="op">=</span><span class="st">"x"</span>, data<span class="op">=</span>dfs, ax<span class="op">=</span>axs[<span class="dv">1</span>])</span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>ax2 <span class="op">=</span> sns.scatterplot(x<span class="op">=</span><span class="st">"datetime"</span>, y<span class="op">=</span><span class="st">"length_km"</span>, marker<span class="op">=</span><span class="st">"x"</span>, data<span class="op">=</span>dfs, ax<span class="op">=</span>axs[<span class="dv">2</span>])</span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>ax3 <span class="op">=</span> sns.scatterplot(x<span class="op">=</span><span class="st">"datetime"</span>, y<span class="op">=</span><span class="st">"airtime_hours"</span>, marker<span class="op">=</span><span class="st">"x"</span>, data<span class="op">=</span>dfs, ax<span class="op">=</span>axs[<span class="dv">3</span>])</span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>ax0.<span class="bu">set</span>(ylabel<span class="op">=</span><span class="st">"No. flights per day"</span>)</span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>ax1.<span class="bu">set</span>(ylabel<span class="op">=</span><span class="st">"Max altitude [m]"</span>)</span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>ax2.<span class="bu">set</span>(ylabel<span class="op">=</span><span class="st">"Distance [km]"</span>)</span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a>ax3.<span class="bu">set</span>(ylabel<span class="op">=</span><span class="st">"Airtime [h]"</span>)</span>
+<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a>ax0.set_xlim([start, end])</span>
+<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a>ax1.set_xlim([start, end])</span>
+<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a>ax2.set_xlim([start, end])</span>
+<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a>ax3.set_xlim([start, end])</span>
+<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
 <div id="fig-monitoring" class="quarto-figure quarto-figure-center anchored">
