@@ -45,9 +45,11 @@ clim_counts = clim_counts.groupby(clim_counts.index.isocalendar().week)
 clim_counts = clim_counts.rolling(window=f"{n_years * 365}D", center=False).mean().reset_index(0, drop=True)
 clim_counts = clim_counts.sort_index().rolling("20D", center=True).mean()
 
-clim = clim[clim.index > datetime.now(timezone.utc) - timedelta(days=90)]
-clim_counts = clim_counts[clim_counts.index > datetime.now(timezone.utc) - timedelta(days=90)]
-dfs = df_flight[df_flight.datetime > datetime.now(timezone.utc) - timedelta(days=90)]
+end = datetime.now(timezone.utc)
+start = end - timedelta(days=90)
+clim = clim[clim.index > start]
+clim_counts = clim_counts[clim_counts.index > start]
+dfs = df_flight[df_flight.datetime > start]
 dfg = dfs.groupby(df_flight.date).datetime.count()
 
 fig, axs = plt.subplots(4, sharex=True, figsize=(7, 10))
@@ -79,6 +81,11 @@ ax0.set(ylabel="No. flights per day")
 ax1.set(ylabel="Max altitude [m]")
 ax2.set(ylabel="Distance [km]")
 ax3.set(ylabel="Airtime [h]")
+
+ax0.set_xlim([start, end])
+ax1.set_xlim([start, end])
+ax2.set_xlim([start, end])
+ax3.set_xlim([start, end])
 
 plt.tight_layout()
 ```
