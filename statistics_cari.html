@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2023-09-29">
+<meta name="dcterms.date" content="2023-09-30">
 
 <title>Startleiter - Carì</title>
 <style>
@@ -166,7 +166,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">September 29, 2023</p>
+      <p class="date">September 30, 2023</p>
     </div>
   </div>
   
@@ -299,24 +299,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>months <span class="op">=</span> pd.date_range(<span class="st">"1900-01-01"</span>, <span class="st">"1900-12-01"</span>, freq<span class="op">=</span><span class="st">'MS'</span>).strftime(<span class="st">"%b"</span>)</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> sns.catplot(x<span class="op">=</span><span class="st">"month"</span>, y<span class="op">=</span><span class="st">"max_altitude_m"</span>, order<span class="op">=</span>months, data<span class="op">=</span>df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-stderr">
-<pre><code>/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
-  with pd.option_context('mode.use_inf_as_na', True):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
-  with pd.option_context('mode.use_inf_as_na', True):</code></pre>
-</div>
 <div class="cell-output cell-output-display">
 <div id="fig-altitude-by-month" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="statistics_cari_files/figure-html/fig-altitude-by-month-output-2.png" width="470" height="470" class="figure-img"></p>
+<p><img src="statistics_cari_files/figure-html/fig-altitude-by-month-output-1.png" width="470" height="470" class="figure-img"></p>
 <figcaption class="figure-caption">Figure&nbsp;6: Maximum flight altitude per month</figcaption>
 </figure>
 </div>
@@ -325,26 +311,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell" data-execution_count="9">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> sns.catplot(x<span class="op">=</span><span class="st">"length_km"</span>, y<span class="op">=</span><span class="st">"month"</span>, order<span class="op">=</span>months, data<span class="op">=</span>df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> sns.catplot(x<span class="op">=</span><span class="st">"length_km"</span>, y<span class="op">=</span><span class="st">"month"</span>, order<span class="op">=</span>months, data<span class="op">=</span>df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-stderr">
-<pre><code>/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
-  with pd.option_context('mode.use_inf_as_na', True):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
-  with pd.option_context('mode.use_inf_as_na', True):</code></pre>
-</div>
 <div class="cell-output cell-output-display">
 <div id="fig-distance-by-month" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="statistics_cari_files/figure-html/fig-distance-by-month-output-2.png" width="471" height="470" class="figure-img"></p>
+<p><img src="statistics_cari_files/figure-html/fig-distance-by-month-output-1.png" width="471" height="470" class="figure-img"></p>
 <figcaption class="figure-caption">Figure&nbsp;7: Maximum flight distance per month</figcaption>
 </figure>
 </div>
@@ -353,26 +325,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell" data-execution_count="10">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> sns.catplot(x<span class="op">=</span><span class="st">"airtime_hours"</span>, y<span class="op">=</span><span class="st">"month"</span>, order<span class="op">=</span>months, data<span class="op">=</span>df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> sns.catplot(x<span class="op">=</span><span class="st">"airtime_hours"</span>, y<span class="op">=</span><span class="st">"month"</span>, order<span class="op">=</span>months, data<span class="op">=</span>df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-stderr">
-<pre><code>/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
-  with pd.option_context('mode.use_inf_as_na', True):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
-  with pd.option_context('mode.use_inf_as_na', True):</code></pre>
-</div>
 <div class="cell-output cell-output-display">
 <div id="fig-duration-by-month" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="statistics_cari_files/figure-html/fig-duration-by-month-output-2.png" width="470" height="470" class="figure-img"></p>
+<p><img src="statistics_cari_files/figure-html/fig-duration-by-month-output-1.png" width="470" height="470" class="figure-img"></p>
 <figcaption class="figure-caption">Figure&nbsp;8: Maximum flight duration per month</figcaption>
 </figure>
 </div>
