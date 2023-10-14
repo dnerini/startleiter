@@ -17,5 +17,5 @@ dependencies:
   - dask
   - jupyter
   - netcdf4
-  - firefox
+  - firefox=117.0
   # - geckodriver
