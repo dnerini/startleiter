@@ -4,18 +4,15 @@ import time
 
 import psutil
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver import FirefoxOptions
 
 LOGGER = logging.getLogger(__name__)
 
 
 def launch_browser():
-    options = Options()
-    options.headless = True
-    # options.log.level = "trace"  # log output is stored in geckodriver.log (current dir)
-    browser = webdriver.Firefox(
-        options=options,
-    )
+    options = FirefoxOptions()
+    options.add_argument("--headless")
+    browser = webdriver.Firefox(options=options)
     browser.set_page_load_timeout(60)
     browser.set_script_timeout(30)
     return browser
