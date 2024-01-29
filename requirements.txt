@@ -3,7 +3,7 @@ matplotlib
 metpy
 numpy
 netcdf4
-pandas
+pandas<2
 psutil
 psycopg2-binary
 requests
