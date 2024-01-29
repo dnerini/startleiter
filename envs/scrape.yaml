@@ -8,10 +8,10 @@ dependencies:
   - psycopg2
   - metpy
   - numpy
-  - pandas
+  - pandas<2
   - requests
   - selenium
-  - sqlalchemy
+  - sqlalchemy<2
   - toml
   - xarray
   - dask
