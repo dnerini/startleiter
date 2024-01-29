@@ -1,1 +1,1 @@
-Sitemap: https://github.com/dnerini/startleiter/sitemap.xml
+Sitemap: https://dnerini.github.io/startleiter/sitemap.xml
