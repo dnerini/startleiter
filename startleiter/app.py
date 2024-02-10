@@ -189,7 +189,7 @@ def get_surface(time: datetime, leadtime_days: int) -> xr.Dataset:
     return surface[["KLO-GVE", "KLO-LUG"]]
 
 
-def get_features(time, leadtime_days):
+def get_inputs(time, leadtime_days):
     features = get_sounding("Cameri", time, leadtime_days)
     surface = get_surface(time, leadtime_days)
     surface = surface.pad(
@@ -217,11 +217,11 @@ def preprocess(features, site, moments):
 def predict(site: str, time: datetime, leadtime_days: int):
     """Predict flyability, max altitude and max distance."""
 
-    features = get_features(time, leadtime_days)
+    inputs = get_inputs(time, leadtime_days)
 
     # flyability
-    inputs = preprocess(features, site, MOMENTS_FLYABILITY)
-    fly_prob = float(MODEL_FLYABILITY.predict(inputs.values[None, ..., 0])[0][0])
+    features = preprocess(inputs, site, MOMENTS_FLYABILITY)
+    fly_prob = float(MODEL_FLYABILITY.predict(features.values[None, ..., 0])[0][0])
     fly_prob = float(FLYABILITY_CALIBRATION_CURVE.predict([fly_prob]))
     if POSITIVE_LABEL == 0:
         fly_prob = 1 - fly_prob
@@ -231,13 +231,13 @@ def predict(site: str, time: datetime, leadtime_days: int):
         max_alt_gain = 0
         max_dist = 0
     else:
-        inputs = preprocess(features, site, MOMENTS_MAX_ALT)
+        features = preprocess(inputs, site, MOMENTS_MAX_ALT)
         max_alt_gain = ALT_BINS[
-            int(MODEL_MAX_ALT.predict(inputs.values[None, ..., 0])[0].argmax())
+            int(MODEL_MAX_ALT.predict(features.values[None, ..., 0])[0].argmax())
         ]
-        inputs = preprocess(features, site, MOMENTS_MAX_DIST)
+        features = preprocess(inputs, site, MOMENTS_MAX_DIST)
         max_dist = DIST_BINS[
-            int(MODEL_MAX_DIST.predict(inputs.values[None, ..., 0])[0].argmax())
+            int(MODEL_MAX_DIST.predict(features.values[None, ..., 0])[0].argmax())
         ]
 
     max_alt = (max_alt_gain + SITES[site]["elevation"]) // 100 * 100
@@ -248,10 +248,10 @@ def predict(site: str, time: datetime, leadtime_days: int):
 @lru_cache(maxsize=21)
 def explain(site: str, time: datetime, leadtime_days: int):
     fly_prob, max_alt, max_dist = predict(site, time, leadtime_days)
-    features = get_features(time, leadtime_days)
-    inputs = preprocess(features, site, MOMENTS_FLYABILITY)
+    inputs = get_inputs(time, leadtime_days)
+    features = preprocess(inputs, site, MOMENTS_FLYABILITY)
     shap_values = compute_shap(
-        BACKGROUND, MODEL_FLYABILITY, inputs.values[None, ..., 0]
+        BACKGROUND, MODEL_FLYABILITY, features.values[None, ..., 0]
     )[0]
     if POSITIVE_LABEL == 0:
         shap_values *= -1
@@ -259,7 +259,8 @@ def explain(site: str, time: datetime, leadtime_days: int):
         SITES[site],
         time,
         leadtime_days,
-        features,
+        list(features.coords["variable"].values),
+        inputs,
         shap_values,
         fly_prob,
         max_alt,

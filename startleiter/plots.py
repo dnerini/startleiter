@@ -48,22 +48,23 @@ def explainable_plot(
     site,
     reftime,
     leadtime_days,
-    features,
+    feature_names,
+    inputs,
     shap_values,
     flyability,
     max_alt_m,
     max_dist_km,
     min_pressure_hPa,
 ):
-    features = features.bfill(dim="level", limit=3)
+    inputs = inputs.bfill(dim="level", limit=3)
     # Assign units
-    p = features.level.values * units.hPa
-    T = features.sel(variable="TEMP").values * units.degC
-    Td = (T.magnitude - features.sel(variable="DWPD").values) * units.degC
-    U = features.sel(variable="U").values * units.knots
-    V = features.sel(variable="V").values * units.knots
-    QFF_KL = features.sel(variable="KLO-LUG").values * units.hPa
-    QFF_KG = features.sel(variable="KLO-GVE").values * units.hPa
+    p = inputs.level.values * units.hPa
+    T = inputs.sel(variable="TEMP").values * units.degC
+    Td = (T.magnitude - inputs.sel(variable="DWPD").values) * units.degC
+    U = inputs.sel(variable="U").values * units.knots
+    V = inputs.sel(variable="V").values * units.knots
+    QFF_KL = inputs.sel(variable="KLO-LUG").values * units.hPa
+    QFF_KG = inputs.sel(variable="KLO-GVE").values * units.hPa
 
     fig = plt.figure(layout=None, figsize=(6, 6.5))
     gs = fig.add_gridspec(nrows=5, ncols=3)
@@ -160,8 +161,8 @@ def explainable_plot(
     )
     reftime = f"{reftime:%Y-%m-%d}"
     leadtime = f"{leadtime_days * 24:02d}"
-    validtime = f"{features.attrs['validtime']:%a %d %b}"
-    source = f"{features.attrs['source']}"
+    validtime = f"{inputs.attrs['validtime']:%a %d %b}"
+    source = f"{inputs.attrs['source']}"
     ax1.text(
         0,
         1.0,
@@ -196,38 +197,42 @@ def explainable_plot(
 
     ax1.axis("off")
 
-    tt = pd.date_range(features.attrs["validtime"], periods=24, freq="1H")
+    tt = pd.date_range(inputs.attrs["validtime"], periods=24, freq="1H")
     ax2.plot(tt, QFF_KG[:24], "k-")
     ax3.plot(tt, QFF_KL[:24], "k-")
     for i in range(len(tt) - 1):
-        ax2.plot(
-            tt[i : i + 2],
-            QFF_KG[i : i + 2],
-            lw=5,
-            color="r",
-            alpha=np.clip(shval[i, 4], 0, 1),
-        )
-        ax2.plot(
-            tt[i : i + 2],
-            QFF_KG[i : i + 2],
-            lw=5,
-            color="b",
-            alpha=np.abs(np.clip(shval[i, 4], -1, 0)),
-        )
-        ax3.plot(
-            tt[i : i + 2],
-            QFF_KL[i : i + 2],
-            lw=5,
-            color="r",
-            alpha=np.clip(shval[i, 5], 0, 1),
-        )
-        ax3.plot(
-            tt[i : i + 2],
-            QFF_KL[i : i + 2],
-            lw=5,
-            color="b",
-            alpha=np.abs(np.clip(shval[i, 5], -1, 0)),
-        )
+        idx_shval = 4
+        if "KLO-GVE" in feature_names:
+            ax2.plot(
+                tt[i : i + 2],
+                QFF_KG[i : i + 2],
+                lw=5,
+                color="r",
+                alpha=np.clip(shval[i, idx_shval], 0, 1),
+            )
+            ax2.plot(
+                tt[i : i + 2],
+                QFF_KG[i : i + 2],
+                lw=5,
+                color="b",
+                alpha=np.abs(np.clip(shval[i, idx_shval], -1, 0)),
+            )
+            idx_shval += 1
+        if "KLO-LUG" in feature_names:
+            ax3.plot(
+                tt[i : i + 2],
+                QFF_KL[i : i + 2],
+                lw=5,
+                color="r",
+                alpha=np.clip(shval[i, idx_shval], 0, 1),
+            )
+            ax3.plot(
+                tt[i : i + 2],
+                QFF_KL[i : i + 2],
+                lw=5,
+                color="b",
+                alpha=np.abs(np.clip(shval[i, idx_shval], -1, 0)),
+            )
 
     ax2.hlines(0, tt.min(), tt.max(), ls=":", color="black")
     ylim_min = min(0, np.min(QFF_KG[:24].magnitude)) - 2
