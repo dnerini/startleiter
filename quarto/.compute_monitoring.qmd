@@ -63,13 +63,13 @@ axs[3].tick_params(axis="x", labelrotation=45)
 
 # predictions
 pred = df_pred[df_pred.leadtime_days==0].set_index("validtime").sort_index()
-axs[0].twinx().step(pred.index, pred.flying_probability, color="gray", alpha=0.5)
+axs[0].twinx().step(pred.index, pred.flying_probability, where="post", color="gray", alpha=0.5)
 twinx = plt.gca()
 twinx.grid(None)
 twinx.set_ylim([0, 1])
 twinx.set_ylabel("Flyability []")
-axs[1].step(pred.index, pred.max_altitude_masl, color="gray", alpha=0.5)
-axs[2].step(pred.index, pred.max_distance_km, color="gray", alpha=0.5)
+axs[1].step(pred.index, pred.max_altitude_masl, where="post", color="gray", alpha=0.5)
+axs[2].step(pred.index, pred.max_distance_km, where="post", color="gray", alpha=0.5)
 
 # plot individual flights
 ax0 = sns.scatterplot(x=dfg.index, y=dfg.values, marker="x", ax=axs[0])
