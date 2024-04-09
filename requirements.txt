@@ -14,4 +14,4 @@ fastapi
 uvicorn
 bottleneck
 tensorflow-cpu<2.12
-shap
+shap<0.42
