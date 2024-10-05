@@ -14,7 +14,7 @@ from fastapi import FastAPI
 from starlette.responses import StreamingResponse, RedirectResponse
 
 from startleiter import config as CFG
-from startleiter import openmeteo, uwyo, rucsoundings
+from startleiter import openmeteo, uwyo
 from startleiter.decorators import try_wait
 from startleiter.explainer import compute_shap
 from startleiter.plots import explainable_plot
@@ -110,10 +110,12 @@ def get_last_sounding(station, time):
 
 
 @try_wait(maxattempts=3)
-def get_last_sounding_forecast(station, time, leadtime_hrs):
+def get_last_sounding_forecast(station, leadtime_hrs):
     leadtime = timedelta(hours=leadtime_hrs)
-    data = list(rucsoundings.scrape(station, time, leadtime).items())[0]
-    return data[0], data[1]["data"]
+    lat = station["latitude"]
+    lon = station["longitude"]
+    # data = list(rucsoundings.scrape(station, time, leadtime).items())[0]
+    return openmeteo.scrape_sounding(lat, lon, leadtime)
 
 
 def get_last_pressure_diff_forecast(time: datetime, leadtime_days: int):
@@ -161,18 +163,16 @@ def get_sounding(station: str, time: datetime, leadtime_days: int) -> xr.Dataset
     station = STATIONS[station]
     if leadtime_days > 0:
         validtime, sounding = get_last_sounding_forecast(
-            station["name"], time, leadtime_hrs=int(leadtime_days) * 24
+            station, leadtime_hrs=int(leadtime_days) * 24
         )
-        sounding.attrs["source"] = f"GFS sounding +{leadtime_days * 24:.0f} h"
+        sounding.attrs["source"] = f"DWD-ICON sounding +{leadtime_days * 24:.0f} h"
     else:
         try:
             validtime, sounding = get_last_sounding(station["stid"], time)
         except IndexError:
             LOGGER.error("radiosounding not available, using forecast data")
-            validtime, sounding = get_last_sounding_forecast(
-                station["name"], time, leadtime_hrs=0
-            )
-            sounding.attrs["source"] = "GFS sounding +0 h"
+            validtime, sounding = get_last_sounding_forecast(station, leadtime_hrs=0)
+            sounding.attrs["source"] = "DWD-ICON sounding +0 h"
         else:
             sounding.attrs["source"] = f"Radiosounding 00Z {station['long_name']}"
     sounding.attrs["validtime"] = validtime

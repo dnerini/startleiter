@@ -1,10 +1,10 @@
 import logging
-import requests
 from datetime import datetime
 
+import requests
+
 from startleiter import config as CFG
-from startleiter.database import Site, Source, Prediction
-from startleiter.database import Database
+from startleiter.database import Database, Prediction, Site, Source
 
 LOGGER = logging.getLogger(__name__)
 
