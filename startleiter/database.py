@@ -97,7 +97,7 @@ class Database:
     def __init__(self):
         db_url = os.environ.get("DATABASE_URL")
         db_url = db_url.replace("postgres://", "postgresql://")
-        self.engine = create_engine(db_url, echo=False)
+        self.engine = create_engine(db_url, echo=False, pool_pre_ping=True)
         Session = sessionmaker(self.engine)
         self.session = Session()
         Base.metadata.create_all(self.engine)
