@@ -23,10 +23,10 @@ from startleiter import config as CFG
 
 LOGGER = logging.getLogger(__name__)
 TIME_START = time.monotonic()
-NUM_FLIGHTS_ON_PAGE = 50
-BUFFER_DAYS = 7
+NUM_FLIGHTS_PER_SITE = 20
+BUFFER_DAYS = 3
 COUNTER = 0
-STOP_AFTER = 50
+STOP_AFTER = 60
 BASE_URL = "https://www.xcontest.org"
 SEARCH_URL = BASE_URL + "/world/en/flights-search"
 DEFAULT_QUERY = {
@@ -222,6 +222,8 @@ def parse_flights(browser, pace):
 
         if COUNTER == STOP_AFTER:
             break
+        if n + 1 == NUM_FLIGHTS_PER_SITE:
+            break
 
     print("")
     return flights_data
@@ -304,7 +306,7 @@ def main(site, pace):
         LOGGER.info(f"Starting querying from flight no. {id_start}.")
         while COUNTER < STOP_AFTER:
             LOGGER.debug(
-                f"XContest Flight Chunk {id_start} to {id_start + min(STOP_AFTER - 1, NUM_FLIGHTS_ON_PAGE)}"
+                f"XContest Flight Chunk {id_start} to {id_start + min(STOP_AFTER - 1, NUM_FLIGHTS_PER_SITE)}"
             )
             this_query = {
                 "list[start]": id_start,
@@ -325,8 +327,8 @@ def main(site, pace):
                     preprocess_fn=preprocess_xcontest,
                     preprocess_kwargs={"source_id": source_id, "site_id": site_id},
                 )
-            if len(flight_chunk) == NUM_FLIGHTS_ON_PAGE:
-                id_start += NUM_FLIGHTS_ON_PAGE
+            if len(flight_chunk) == NUM_FLIGHTS_PER_SITE:
+                id_start += NUM_FLIGHTS_PER_SITE
             else:
                 break
 
@@ -338,6 +340,7 @@ def main(site, pace):
 
     finally:
         browser.quit()
+        db.session.close()
         # cleanup()
 
 
